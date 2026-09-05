@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kantonstour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap">
+<style>/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+</style>
+<style>
+:root{
+  --page:#f9f9f7; --surface:#fcfcfb; --surface2:#f1f0ec;
+  --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --hair:#e1e0d9; --ring:rgba(11,11,11,.10);
+  --red:#d33a39; --red-soft:rgba(211,58,57,.10);
+  --d1:#2a78d6; --d2:#eb6834; --d3:#1baf7a;
+  --d1s:rgba(42,120,214,.11); --d2s:rgba(235,104,52,.11); --d3s:rgba(27,175,122,.11);
+  --good:#006300; --warn:#8a5a00; --crit:#b02a2a;
+  --lake:#d7e6f7; --canton:#f1f0ec; --canton-line:#d8d7cf;
+  --beer:rgba(237,161,0,.14); --beer-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#0d0d0d; --surface:#1a1a19; --surface2:#232322;
+    --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --hair:#2c2c2a; --ring:rgba(255,255,255,.10);
+    --red:#e66767; --red-soft:rgba(230,103,103,.14);
+    --d1:#3987e5; --d2:#d95926; --d3:#199e70;
+    --d1s:rgba(88,155,235,.16); --d2s:rgba(240,120,66,.14); --d3s:rgba(45,190,135,.14);
+    --good:#0ca30c; --warn:#fab219; --crit:#e66767;
+    --lake:#1f3a58; --canton:#212120; --canton-line:#3c3c39;
+    --beer:rgba(201,133,0,.16); --beer-line:#eda100;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --surface2:#232322;
+  --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --hair:#2c2c2a; --ring:rgba(255,255,255,.10);
+  --red:#e66767; --red-soft:rgba(230,103,103,.14);
+  --d1:#3987e5; --d2:#d95926; --d3:#199e70;
+  --d1s:rgba(88,155,235,.16); --d2s:rgba(240,120,66,.14); --d3s:rgba(45,190,135,.14);
+  --good:#0ca30c; --warn:#fab219; --crit:#e66767;
+  --lake:#1f3a58; --canton:#212120; --canton-line:#3c3c39;
+  --beer:rgba(201,133,0,.16); --beer-line:#eda100;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--page);color:var(--ink);font-family:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 80px}
+a{color:var(--red)}
+h1,h2,h3{text-wrap:balance;margin:0}
+header{padding:44px 0 10px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--red);display:flex;align-items:center;gap:10px}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+h1{font-weight:900;font-size:clamp(40px,7vw,64px);letter-spacing:-.02em;line-height:1.02;margin:10px 0 6px}
+.sub{color:var(--ink2);font-size:16px;max-width:66ch}
+.verdict{display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:var(--red-soft);border:1px solid var(--red);color:var(--ink);border-radius:999px;padding:7px 16px;font-weight:600;font-size:14px}
+.verdict .dot{width:9px;height:9px;border-radius:50%;background:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:26px 0 8px}
+.tile{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:14px 16px}
+.tile .v{font-size:26px;font-weight:800;letter-spacing:-.01em}
+.tile .v small{font-size:14px;font-weight:600;color:var(--ink2)}
+.tile .k{font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.togglebar{position:sticky;top:0;z-index:30;background:var(--page);padding:12px 0;margin-top:18px;border-bottom:1px solid var(--hair)}
+.toggle{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--ring);border-radius:10px;padding:4px;max-width:680px}
+.toggle button{flex:1;border:0;background:transparent;color:var(--ink2);font:inherit;font-weight:600;font-size:13.5px;padding:9px 10px;border-radius:7px;cursor:pointer}
+.toggle button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.toggle button.on{background:var(--red);color:#fff}
+.toggle button .hint{display:block;font-weight:400;font-size:11.5px;opacity:.85}
+section{margin-top:44px}
+.sechead{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
+.sechead h2{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sechead .rule{flex:1;height:1px;background:var(--hair)}
+.sechead .tag{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.mapcard{background:var(--surface);border:1px solid var(--ring);border-radius:14px;padding:14px;position:relative}
+#map{position:relative}
+#map svg{display:block;width:100%;height:auto;cursor:grab;touch-action:none}
+#map svg.dragging{cursor:grabbing}
+.zoomctl{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:5px;z-index:5}
+.zoomctl button{width:32px;height:32px;border-radius:8px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);font-size:17px;font-weight:700;cursor:pointer;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.zoomctl button:hover{background:var(--surface2)}
+.zoomctl button:focus-visible{outline:2px solid var(--red)}
+.maphint{position:absolute;bottom:8px;right:12px;font-size:11px;color:var(--muted);pointer-events:none}
+.maplegend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:12px 6px 2px;font-size:13px;color:var(--ink2)}
+.lg{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.lg .sw{width:22px;height:4px;border-radius:2px}
+.lg .pin{width:15px;height:15px;border-radius:50%;background:var(--surface);border:2.5px solid var(--muted)}
+.lg .wk{width:12px;height:12px;background:var(--surface);border:2px dashed var(--muted);transform:rotate(45deg)}
+.stopindex{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--ink2)}
+.stopindex .si{display:flex;gap:8px;align-items:baseline}
+.stopindex .n{font-family:"Spline Sans Mono",monospace;font-weight:700;font-size:11.5px;min-width:20px;text-align:right}
+#tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--page);border-radius:8px;padding:8px 12px;font-size:12.5px;line-height:1.45;max-width:280px;opacity:0;transition:opacity .12s;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion: reduce){#tooltip{transition:none}}
+.day{background:var(--surface);border:1px solid var(--ring);border-radius:14px;overflow:hidden;margin-top:22px}
+.dayhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:16px 20px;border-bottom:1px solid var(--hair);border-top:4px solid var(--dc)}
+.dayhead .dnum{font-weight:900;font-size:19px}
+.dayhead .dnum span{color:var(--dc)}
+.dayhead .droute{color:var(--ink2);font-size:14px}
+.dayhead .dmeta{margin-left:auto;color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:660px}
+td{padding:9px 14px;vertical-align:top;border-top:1px solid var(--hair);font-size:14px}
+tr:first-child td{border-top:0}
+td.t{font-family:"Spline Sans Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap;width:112px;font-weight:600}
+td.t .pl{color:var(--muted);font-weight:400;font-size:12px}
+.trainchip{display:inline-block;font-family:"Spline Sans Mono",monospace;font-weight:700;font-size:12.5px;background:var(--ink);color:var(--page);border-radius:5px;padding:2px 8px;margin-right:8px;white-space:nowrap}
+.dir{color:var(--muted);font-size:12.5px}
+.sbblink{font-size:11.5px;font-weight:700;text-decoration:none;border:1px solid var(--red);border-radius:4px;padding:1px 7px;margin-left:8px;white-space:nowrap;vertical-align:1px}
+.sbblink:hover{background:var(--red-soft)}
+tr.stop td{background:var(--surface2)}
+tr.beerstop td{background:color-mix(in srgb, var(--dcs) 60%, var(--surface))}
+tr.onboard td{background:var(--beer);border-left:3px solid var(--beer-line)}
+.cchip{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:13px;letter-spacing:.02em}
+.cchip .cb{display:inline-block;min-width:34px;text-align:center;background:var(--dc);color:#fff;border-radius:5px;padding:2px 6px;font-size:12.5px}
+.stopmeta{color:var(--ink2);font-size:12.5px;margin-top:2px}
+.mug{display:inline-block;vertical-align:-2px;margin-right:6px}
+.xfer{color:var(--muted);font-size:12px;font-weight:600}
+.notes{display:grid;gap:10px}
+.note{background:var(--surface);border:1px solid var(--ring);border-left:4px solid var(--muted);border-radius:9px;padding:12px 16px;font-size:13.5px;color:var(--ink2)}
+.note b{color:var(--ink)}
+.note.warn{border-left-color:var(--warn)}
+.note.good{border-left-color:var(--good)}
+footer{margin-top:60px;padding-top:16px;border-top:1px solid var(--hair);color:var(--muted);font-size:12.5px;line-height:1.7}
+
+#map{height:640px;border-radius:10px;overflow:hidden;background:#dfe9f2}
+@media (max-width:700px){#map{height:480px}}
+.mapbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:0 4px 10px;font-size:13px;color:var(--ink2)}
+.mapbar label{display:inline-flex;align-items:center;gap:6px;font-weight:600;cursor:pointer}
+.mapbar .days{display:inline-flex;gap:4px}
+.mapbar .days button{border:1px solid var(--ring);background:var(--surface2);color:var(--ink2);font:inherit;font-weight:700;font-size:12px;padding:3px 9px;border-radius:6px;cursor:pointer}
+.mapbar .days button.on{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.mapbar .status{margin-left:auto;font-size:12px;color:var(--muted)}
+.stopmk{width:22px;height:22px;border-radius:50%;background:#fff;border:2.6px solid #333;color:#111;font:800 11px "Spline Sans Mono",monospace;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.obmk{background:#c98500;color:#fff;font:700 10.5px Archivo,sans-serif;padding:2px 7px;border-radius:9px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.35);border:1.5px solid #fff}
+.trmk{color:#fff;font:700 10.5px "Spline Sans Mono",monospace;padding:2px 6px;border-radius:5px;white-space:nowrap;border:1.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);transform:translate(-50%,-50%);position:absolute;left:0;top:0}
+.trmk.IC,.trmk.EC,.trmk.ICE{background:#d33a39} .trmk.IR{background:#e0642a} .trmk.RE{background:#7a3ea1} .trmk.S,.trmk.R{background:#2a78d6} .trmk.PE,.trmk.VAE,.trmk.LIX{background:#1baf7a}
+.trmk.ours{outline:3px solid #ffd54a;outline-offset:1px;font-size:11.5px}
+.leaflet-container{font-family:Archivo,system-ui,sans-serif}
+.leaflet-tooltip{font-size:12.5px;line-height:1.4}
+.walkline{stroke-dasharray:6 5}
+.attr a{color:var(--muted)}
+</style></head><body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">16 – 18 October 2026 · Fri – Sun · all 26 cantons · trains only, no buses</div>
+  <h1>Kantonstour</h1>
+  <p class="sub">One beer in <b>every</b> canton in three days, entirely by rail — start and end Zürich HB, first night <b>Luzern</b>,
+  second night <b>Neuchâtel</b>. Two ways to do it, both with tight stops: <b>Option A</b> drinks 10 of the 26 beers <b>on the train</b> and only gets off
+  where you would change trains anyway (16 stops); <b>Option B</b> gets off in <b>all 26</b> cantons, 15′ minimum per stop, longer only where the hourly timetable
+  forces it. Zürich is start and finish only — in between the route never passes through it, and it turns around in Landquart rather than Chur. Pure train plan — every connection is from the official SBB timetable for these exact dates (tap <b>SBB</b> on any leg to open it live); food and hotels are up to you.</p>
+  <div class="verdict"><span class="dot"></span>Verdict: possible — 26/26 cantons · A: 16 stops + 10 on board, home 15:28 · B: 26 stops, home 16:28</div>
+</header>
+<div class="stats" id="stats"></div>
+<div class="togglebar"><div class="toggle" role="tablist" aria-label="Variant">
+  <button id="btn-a" role="tab">Option A · Beer on board<span class="hint">16 stops + 10 beers on the train · days end 19:55 / 19:00 / 15:28</span></button>
+  <button id="btn-b" role="tab">Option B · All on the ground<span class="hint">26 stops, 15′ minimum · days end 19:55 / 19:07 / 16:28</span></button>
+</div></div>
+<section>
+  <div class="sechead"><h2>The route</h2><div class="rule"></div><div class="tag" id="maptag"></div></div>
+  <div class="mapcard">
+    <div class="mapbar">
+      <label><input type="checkbox" id="ck-rail" checked> railway tracks (OpenRailwayMap)</label>
+      <label><input type="checkbox" id="ck-cantons" checked> cantons by day</label>
+      <label><input type="checkbox" id="ck-live"> live trains on our lines</label>
+      <span class="days" id="livedays"><button data-d="1">Fri</button><button data-d="2">Sat</button><button data-d="3">Sun</button></span>
+      <span class="status" id="livestatus"></span>
+    </div>
+    <div id="map"></div>
+    <div class="maplegend" id="maplegend"></div>
+    <div class="stopindex" id="stopindex"></div>
+  </div>
+</section>
+<section>
+  <div class="sechead"><h2>Timetable &amp; beer stops</h2><div class="rule"></div><div class="tag">SBB timetable, 16–18.10.2026</div></div>
+  <div id="days"></div>
+</section>
+<section>
+  <div class="sechead"><h2>The walk links</h2><div class="rule"></div><div class="tag">part of the route</div></div>
+  <div class="notes">
+    <div class="note"><b>Altstätten Stadt → Altstätten SG (Friday, 42′ window).</b> The Appenzeller Bahnen rack railway ends at Altstätten Stadt; the SBB Rheintal station is ~1.7 km further down — an easy downhill walk of ~20–25 min. This is what avoids passing through St. Gallen twice.</div>
+    <div class="note"><b>Ziegelbrücke (Friday, both options).</b> The station itself already stands on Glarus soil, but for an honest GL beer walk ~5 min over the Linth channel into Niederurnen (Glarus Nord) and back.</div>
+  </div>
+</section>
+<section>
+  <div class="sechead"><h2>Good to know</h2><div class="rule"></div><div class="tag">verified 05.09.2026</div></div>
+  <div class="notes">
+    <div class="note warn"><b>Everything runs hourly — the schedule is a chain.</b> Miss one train and you usually lose 60 minutes. Set phone timers. 15′ stops leave no margin for a late train — if one slips, fall back to the next hourly service and the rest of the chain shifts by an hour.</div>
+    <div class="note warn"><b>Day lengths:</b> Option A — Fri 07:05–19:55, Sat 07:18–19:00, Sun 08:09–15:28. Option B — Fri 07:05–19:55, Sat 07:18–19:07, Sun 08:09–16:28. Both sleep Luzern, then Neuchâtel.</div>
+    <div class="note"><b>Live trains:</b> the map can show every train currently running on the lines of the selected day — positions are computed from the SBB timetable plus the reported delays (transport.opendata.ch station boards, refreshed every 5 minutes), not from GPS, so expect them to be a minute or two off. Trains with the number of one we take are ringed in yellow. Untick it when you don't need it.</div>
+    <div class="note"><b>The RE 48 briefly crosses Germany</b> (Jestetten corridor before Schaffhausen). Swiss tickets valid, normally no checks — carry an ID.</div>
+    <div class="note"><b>The CJ leg is a train, not a bus:</b> the narrow-gauge red Chemins de fer du Jura from Glovelier through the Franches-Montagnes to La Chaux-de-Fonds. Option A rides it 16:41→17:56 at dusk and drinks the JU beer on it — 75′ through the Jura, the best ride of the trip. Option B skips it: IC from Delémont to Biel (BE beer) and on to Neuchâtel for the night.</div>
+    <div class="note"><b>Drinking your own beer on board is allowed</b> on all trains in this plan (SBB, Thurbo, SOB, Appenzeller Bahnen, Zentralbahn, CJ) and on platforms — that is what Option A is built on. Stock up at Zürich HB and top up in Schaffhausen, Landquart, Olten and Basel. Every on-board beer has at least 20′ inside its canton; the shortest is <b>AR</b> (≈22′, Lustmühle → Gais), the longest <b>JU</b> on the CJ (≈96′) and <b>TG</b> on the S 1 (≈88′). AG is taken on the S 26 through the Freiamt (≈44′) — the price is one hour on Saturday (Olten 13:21, next IC with a proper stop 14:04). BE is the last one, through Bern on the way home.</div>
+    <div class="note good"><b>Tickets:</b> three Saver Day Passes (buy early) or a GA — one pass covers everything here, including Appenzeller Bahnen, Zentralbahn and CJ.</div>
+    <div class="note"><b>OLMA fair runs in St. Gallen 8–18 Oct</b> — expect very full trains around St. Gallen on Friday. <b>Re-check the timetable a few days before</b> (sbb.ch) — the SBB buttons on each leg open the live connection.</div>
+  </div>
+</section>
+<footer class="attr">
+  Timetable: official Swiss public-transport data (transport.opendata.ch / SBB), queried 05.09.2026 for 16–18.10.2026 — annual timetable 2026; re-verify shortly before travel via the SBB links. Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; railway overlay © <a href="https://www.openrailwaymap.org/">OpenRailwayMap</a> (CC-BY-SA); track geometry: SBB open data (data.sbb.ch, "Linie mit Polygon"); canton outlines: swisstopo. 26 cantons, 26 beers — drink responsibly. Prost, Santé, Salute, Viva!
+</footer>
+</div>
+<script src="leaflet.js"></script>
+<script src="data.js"></script>
+<script>
+const DATA = window.KT;
+const MUG = '<svg class="mug" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3h11a1 1 0 0 1 1 1v2h2.5A2.5 2.5 0 0 1 22 8.5v5a2.5 2.5 0 0 1-2.5 2.5H17v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm12 5v6h2.5a.5.5 0 0 0 .5-.5v-5a.5.5 0 0 0-.5-.5H17ZM7 7v9h2V7H7Zm4 0v9h2V7h-2Z"/></svg>';
+const DAYC = {1:'#2a78d6',2:'#eb6834',3:'#1baf7a'};
+const DAYCS = {1:'var(--d1s)',2:'var(--d2s)',3:'var(--d3s)'};
+const DAYLBL = {1:'Day 1 · Fri 16.10', 2:'Day 2 · Sat 17.10', 3:'Day 3 · Sun 18.10'};
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function stopsList(variant){
+  const days = DATA[variant].days, stops = [], walks = [];
+  stops.push({n:1, canton:'ZH', station:'Zürich HB', ll:days[0].legs[0].from_ll, day:1, when:'meet 06:45 · beer #1 before the 07:05 departure'});
+  let n = 1;
+  days.forEach(d => d.legs.forEach(l => {
+    if(l.canton){ n += 1; stops.push({n, canton:l.canton, station:l.to, ll:l.to_ll, day:d.day, when:'arr '+l.arr+(l.stop_min!=null? ' · '+l.stop_min+'′ stop':' · arrival beer')}); }
+    else if((l.note||'').indexOf('walk') >= 0) walks.push({station:l.to, ll:l.to_ll, day:d.day, note:l.note});
+  }));
+  return {stops, walks};
+}
+// ---------- map ----------
+const map = L.map('map', {zoomSnap:0.5, worldCopyJump:false}).setView([46.85, 8.25], 8);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(map);
+const railLayer = L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {maxZoom:19, subdomains:'abc', opacity:.75, attribution:'© OpenRailwayMap'});
+const cantonLayer = L.layerGroup().addTo(map), routeLayer = L.layerGroup().addTo(map), stopLayer = L.layerGroup().addTo(map), liveLayer = L.layerGroup().addTo(map);
+$('ck-rail').addEventListener('change', e => e.target.checked ? railLayer.addTo(map) : map.removeLayer(railLayer));
+if($('ck-rail').checked) railLayer.addTo(map);
+$('ck-cantons').addEventListener('change', e => e.target.checked ? cantonLayer.addTo(map) : map.removeLayer(cantonLayer));
+function pathLen(p){ let s=0; for(let i=1;i<p.length;i++) s+=map.distance(p[i-1],p[i]); return s; }
+function pointAt(p, f){
+  const tot = pathLen(p); let d = f*tot;
+  for(let i=1;i<p.length;i++){ const l = map.distance(p[i-1],p[i]); if(d<=l){ const t=l?d/l:0; return [p[i-1][0]+(p[i][0]-p[i-1][0])*t, p[i-1][1]+(p[i][1]-p[i-1][1])*t]; } d-=l; }
+  return p[p.length-1];
+}
+function renderMap(variant){
+  const days = DATA[variant].days, bd = DATA.beer_day[variant], OB = DATA[variant].onboard || [];
+  cantonLayer.clearLayers(); routeLayer.clearLayers(); stopLayer.clearLayers();
+  for(const [ab, polys] of Object.entries(DATA.cantons)){
+    const day = bd[ab];
+    L.polygon(polys, {color:'#555', weight:.8, opacity:.5, fillColor: day? DAYC[day] : '#999', fillOpacity: day? .13 : .04, interactive:false}).addTo(cantonLayer);
+  }
+  const {stops, walks} = stopsList(variant);
+  let bounds = null;
+  days.forEach(d => d.legs.forEach((l, li) => {
+    l.geo.forEach(path => {
+      if(path.length < 2) return;
+      L.polyline(path, {color:'#fff', weight:7, opacity:.85, interactive:false}).addTo(routeLayer);
+      const pl = L.polyline(path, {color:DAYC[d.day], weight:3.5, opacity:1}).addTo(routeLayer);
+      const tr = l.trains.map(t=>t.train).join(' + ');
+      pl.bindTooltip('<b>'+esc(tr)+'</b> '+esc(l.from)+' → '+esc(l.to)+'<br>'+l.dep+' → '+l.arr+' · Day '+d.day, {sticky:true});
+      bounds = bounds ? bounds.extend(pl.getBounds()) : pl.getBounds();
+    });
+    OB.filter(o => o.day===d.day && o.leg===li).forEach(o => {
+      const full = l.geo.flat(); if(full.length<2) return;
+      const pt = pointAt(full, 0.5);
+      L.marker(pt, {icon: L.divIcon({className:'', html:'<div class="obmk">'+MUG+' '+o.c+' on board</div>', iconSize:[0,0], iconAnchor:[0,0]}), zIndexOffset:500})
+        .bindTooltip('<b>'+o.c+' — beer on board</b><br>≈'+o.mins+'′ inside · '+esc(o.note)).addTo(stopLayer);
+    });
+  }));
+  // walk links
+  days.forEach(d => d.legs.forEach((l, li) => {
+    if((l.note||'').indexOf('walk')>=0 && d.legs[li+1]) L.polyline([l.to_ll, d.legs[li+1].from_ll], {color:'#333', weight:3, dashArray:'6 5'}).bindTooltip('Walk link · '+esc(l.note)).addTo(routeLayer);
+  }));
+  stops.forEach(st => {
+    L.marker(st.ll, {icon: L.divIcon({className:'', html:'<div class="stopmk" style="border-color:'+DAYC[st.day]+'">'+st.n+'</div>', iconSize:[22,22], iconAnchor:[11,11]}), zIndexOffset:800})
+      .bindTooltip('<b>'+st.n+' · '+esc(st.station)+' ('+st.canton+')</b><br>'+esc(st.when)).addTo(stopLayer);
+  });
+  if(bounds && !renderMap.fitted){ map.fitBounds(bounds.pad(0.04)); renderMap.fitted = true; }
+  $('maptag').textContent = 'option '+variant.toUpperCase()+' · '+stops.length+' stops'+(OB.length? ' · '+OB.length+' beers on board' : ' · 15′ minimum');
+  let lg = '';
+  for(const d of [1,2,3]) lg += '<span class="lg"><span class="sw" style="background:'+DAYC[d]+'"></span>'+DAYLBL[d]+'</span>';
+  lg += '<span class="lg"><span class="pin"></span>beer stop</span><span class="lg"><span class="wk"></span>walk link</span>';
+  if(OB.length) lg += '<span class="lg" style="color:var(--beer-line)">'+MUG+'beer on board</span>';
+  lg += '<span class="lg"><span class="trmk IC" style="position:static;transform:none">IC</span><span class="trmk S" style="position:static;transform:none">S</span> live train</span>';
+  $('maplegend').innerHTML = lg;
+  $('stopindex').innerHTML = stops.map(st => '<span class="si"><span class="n" style="color:'+DAYC[st.day]+'">'+st.n+'</span><span>'+esc(st.station)+' · <b>'+st.canton+'</b></span></span>').join('');
+}
+// ---------- live trains ----------
+const LIVE = {on:false, day: null, journeys: {}, timer:null, anim:null, lastFetch:0};
+const tripDay = (() => { const t = new Date().toISOString().slice(0,10); return ({'2026-10-16':1,'2026-10-17':2,'2026-10-18':3})[t] || 1; })();
+LIVE.day = tripDay;
+function normKey(cat, num){ num = String(num||''); if(/^[A-Za-z]+$/.test(num)) return num.toUpperCase(); return (cat+' '+num.replace(/^0+/,'')).trim(); }
+function liveConfig(variant){
+  const day = DATA[variant].days[LIVE.day-1], lines = new Set(), stations = new Set(), ours = new Set();
+  day.legs.forEach(l => l.trains.forEach(t => { lines.add(t.train); if(t.dep_id) stations.add(t.dep_id); if(t.arr_id) stations.add(t.arr_id); if(t.name) ours.add(t.name); }));
+  return {lines, stations:[...stations], ours};
+}
+function fmtLocal(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+async function fetchLive(){
+  const cfg = liveConfig(VARIANT); const since = new Date(Date.now()-150*60000);
+  $('livestatus').textContent = 'loading '+cfg.stations.length+' station boards…';
+  const found = {};
+  await Promise.all(cfg.stations.map(async id => {
+    try{
+      const u = 'https://transport.opendata.ch/v1/stationboard?station='+encodeURIComponent(id)+'&limit=60&datetime='+encodeURIComponent(fmtLocal(since))+'&transportations[]=train';
+      const r = await fetch(u); if(!r.ok) return; const j = await r.json();
+      const board = j.station;
+      for(const e of (j.stationboard||[])){
+        const key = normKey(e.category, e.number); if(!cfg.lines.has(key)) continue;
+        const jid = e.name+'@'+(e.stop.departure||'').slice(0,10);
+        if(found[jid]) continue;
+        const stops = [];
+        (e.passList||[]).forEach((p, i) => {
+          let st = p.station; if(i===0 || !st || !st.coordinate || st.coordinate.x==null) st = (i===0? board : null);
+          if(!st || !st.coordinate || st.coordinate.x==null) return;
+          const src = i===0 ? e.stop : p; const prog = src.prognosis || {};
+          const arr = prog.arrival || src.arrival, dep = prog.departure || src.departure;
+          const delay = (src.delay!=null? src.delay : null);
+          const fix = (iso, dl) => { if(!iso) return null; const t = new Date(iso).getTime(); return (dl && !prog.departure && !prog.arrival) ? t + dl*60000 : t; };
+          stops.push({id:st.id, name:st.name, ll:[st.coordinate.x, st.coordinate.y], arr:fix(arr,delay), dep:fix(dep,delay), delay});
+        });
+        if(stops.length<2) continue;
+        found[jid] = {key, cat:e.category, name:e.name, to:e.to, stops, ours: cfg.ours.has(e.name)};
+      }
+    }catch(err){ console.warn('board failed', id, err); }
+  }));
+  LIVE.journeys = found; LIVE.lastFetch = Date.now();
+  drawLive();
+}
+function segPath(key, a, b){
+  const L_ = (DATA[VARIANT].lines||{})[key] || (DATA.a.lines||{})[key] || (DATA.b.lines||{})[key];
+  if(L_){
+    const s = L_.seg[a.id+'|'+b.id]; if(s) return s;
+    const r = L_.seg[b.id+'|'+a.id]; if(r) return r.slice().reverse();
+    const ia = L_.order.indexOf(a.id), ib = L_.order.indexOf(b.id);
+    if(ia>=0 && ib>=0 && ia!==ib){
+      const step = ia<ib?1:-1; let path=[];
+      for(let i=ia;i!==ib;i+=step){ const x=L_.order[i], y=L_.order[i+step]; let s=L_.seg[x+'|'+y]; if(!s){ const rr=L_.seg[y+'|'+x]; if(!rr) return [a.ll,b.ll]; s=rr.slice().reverse(); } path = path.length? path.concat(s.slice(1)) : s.slice(); }
+      return path;
+    }
+  }
+  return [a.ll, b.ll];
+}
+function positionAt(j, now){
+  const s = j.stops;
+  if(now < (s[0].dep||s[0].arr)) return null;
+  for(let i=0;i<s.length-1;i++){
+    const a=s[i], b=s[i+1]; const t0 = a.dep||a.arr, t1 = b.arr||b.dep; if(t0==null||t1==null) continue;
+    if(now>=t0 && now<=t1){ const f = t1>t0 ? (now-t0)/(t1-t0) : 1; return {ll: pointAt(segPath(j.key,a,b), f), next:b, from:a}; }
+    if(i+1<s.length-1 && now>t1 && now < (b.dep||t1)) return {ll:b.ll, next:s[i+2], from:b, dwell:true};
+  }
+  return null;
+}
+const liveMarkers = {};
+function drawLive(){
+  const now = Date.now(); const seen = new Set(); let count=0, ours=0;
+  for(const [jid, j] of Object.entries(LIVE.journeys)){
+    const pos = positionAt(j, now); if(!pos) continue; seen.add(jid); count++; if(j.ours) ours++;
+    const dl = pos.next && pos.next.delay ? ' +'+pos.next.delay+'′' : '';
+    const label = j.key + (j.ours? ' ★':'');
+    const tip = '<b>'+esc(j.key)+' → '+esc(j.to)+'</b>'+(j.ours? ' · our train':'')+'<br>'+(pos.dwell? 'at ':'next: ')+esc(pos.next? pos.next.name : '')+(pos.next&&pos.next.arr? ' '+new Date(pos.next.arr).toTimeString().slice(0,5):'')+dl+'<br><span style="opacity:.7">train '+esc(j.name.replace(/^0+/,''))+'</span>';
+    if(liveMarkers[jid]){ liveMarkers[jid].setLatLng(pos.ll); liveMarkers[jid].setTooltipContent(tip); }
+    else {
+      liveMarkers[jid] = L.marker(pos.ll, {icon: L.divIcon({className:'', html:'<div class="trmk '+esc(j.cat)+(j.ours?' ours':'')+'">'+esc(label)+'</div>', iconSize:[0,0], iconAnchor:[0,0]}), zIndexOffset:(j.ours?1200:1000)}).bindTooltip(tip).addTo(liveLayer);
+    }
+  }
+  for(const jid of Object.keys(liveMarkers)) if(!seen.has(jid)){ liveLayer.removeLayer(liveMarkers[jid]); delete liveMarkers[jid]; }
+  const age = Math.round((now-LIVE.lastFetch)/60000);
+  $('livestatus').textContent = count+' trains on '+['','Friday','Saturday','Sunday'][LIVE.day]+"'s lines now"+(ours? ' · '+ours+' ★ ours':'')+' · timetable + delays, updated '+(age<1?'just now':age+' min ago');
+}
+function clearLive(){ for(const k of Object.keys(liveMarkers)){ liveLayer.removeLayer(liveMarkers[k]); delete liveMarkers[k]; } LIVE.journeys={}; $('livestatus').textContent=''; }
+function setLive(on){
+  LIVE.on = on; clearInterval(LIVE.timer); clearInterval(LIVE.anim); clearLive();
+  if(!on) return;
+  fetchLive();
+  LIVE.timer = setInterval(() => { if(!document.hidden) fetchLive(); }, 5*60000);
+  LIVE.anim = setInterval(() => { if(!document.hidden) drawLive(); }, 10000);
+}
+$('ck-live').addEventListener('change', e => setLive(e.target.checked));
+document.querySelectorAll('#livedays button').forEach(b => b.addEventListener('click', () => { LIVE.day = +b.dataset.d; document.querySelectorAll('#livedays button').forEach(x=>x.classList.toggle('on', x===b)); if(LIVE.on) setLive(true); }));
+document.querySelector('#livedays button[data-d="'+LIVE.day+'"]').classList.add('on');
+document.addEventListener('visibilitychange', () => { if(!document.hidden && LIVE.on && Date.now()-LIVE.lastFetch > 5*60000) fetchLive(); });
+// ---------- timetable ----------
+function renderDays(variant){
+  const days = DATA[variant].days, OB = DATA[variant].onboard || [];
+  const bpd = {1:0,2:0,3:0}; let out = '';
+  days.forEach(d => {
+    const dc = DAYC[d.day], dcs = DAYCS[d.day]; let rows = '';
+    if(d.day===1){
+      rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">06:45<div class="pl">meet up</div></td><td colspan="2"><span class="cchip"><span class="cb" style="background:'+dc+'">ZH</span> Zürich HB — beer #1 before departure</span><div class="stopmeta">20′ until the 07:05 train</div></td></tr>';
+      bpd[1]++;
+    }
+    d.legs.forEach((l, li) => {
+      l.trains.forEach((t, ti) => {
+        if(ti>0){ const prev = l.trains[ti-1]; const wait = (parseInt(t.dep_time)*60+ +t.dep_time.slice(3)) - (parseInt(prev.arr_time)*60+ +prev.arr_time.slice(3));
+          rows += '<tr><td class="t"></td><td colspan="2" class="xfer">↳ change in '+esc(t.dep_station)+' ('+wait+'′)</td></tr>'; }
+        rows += '<tr><td class="t">'+t.dep_time+' → '+t.arr_time+'<div class="pl">Gl. '+esc(t.dep_platform||'–')+' → '+esc(t.arr_platform||'–')+'</div></td><td colspan="2"><span class="trainchip">'+esc(t.train)+'</span>'+esc(t.dep_station)+' → '+esc(t.arr_station)+' <span class="dir">(direction '+esc(t.dir||'')+')</span>'+(ti===0 && l.sbb ? '<a class="sbblink" href="'+esc(l.sbb)+'" target="_blank" rel="noopener">SBB ↗</a>' : '')+'</td></tr>';
+      });
+      OB.filter(o => o.day===d.day && o.leg===li).forEach(o => { rows += '<tr class="onboard"><td class="t">≈'+o.mins+'′ inside</td><td colspan="2">'+MUG+'<b>'+o.c+' beer on board</b> — '+esc(DATA.canton_names[o.c])+' · '+esc(o.note)+'</td></tr>'; bpd[d.day]++; });
+      if(l.canton){ bpd[d.day]++;
+        rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'<div class="pl">'+(l.stop_min!=null? 'stop':'arrival beer')+'</div></td><td colspan="2"><span class="cchip"><span class="cb" style="background:'+dc+'">'+l.canton+'</span> '+esc(l.to)+'</span>'+(l.note? '<div class="stopmeta">'+esc(l.note)+'</div>':'')+'</td></tr>';
+      } else {
+        rows += '<tr class="stop"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'</td><td colspan="2"><span class="dir">'+esc(l.to)+' — '+esc(l.note||'transfer')+'</span></td></tr>';
+      }
+    });
+    out += '<div class="day"><div class="dayhead" style="--dc:'+dc+'"><span class="dnum"><span>Day '+d.day+'</span> · '+['','Friday 16.10.','Saturday 17.10.','Sunday 18.10.'][d.day]+'</span><span class="droute">'+esc(d.legs[0].from)+' → '+esc(d.legs[d.legs.length-1].to)+'</span><span class="dmeta">'+d.legs[0].dep+' – '+d.legs[d.legs.length-1].arr+' · '+bpd[d.day]+' beers</span></div><div class="tscroll"><table>'+rows+'</table></div></div>';
+  });
+  $('days').innerHTML = out; return bpd;
+}
+function renderStats(variant, bpd){
+  const days = DATA[variant].days;
+  const ride = days.reduce((a,d)=>a+d.legs.reduce((x,l)=>x+l.duration_min,0),0);
+  const ntr = days.reduce((a,d)=>a+d.legs.reduce((x,l)=>x+l.trains.length,0),0);
+  const home = days[2].legs[days[2].legs.length-1].arr;
+  const shortest = Math.min(...days.flatMap(d=>d.legs.filter(l=>l.canton && l.stop_min!=null).map(l=>l.stop_min)));
+  $('stats').innerHTML = '<div class="tile"><div class="v">26 <small>of 26</small></div><div class="k">cantons — complete</div></div>'+
+    '<div class="tile"><div class="v">'+(bpd[1]+bpd[2]+bpd[3])+'</div><div class="k">beers · '+bpd[1]+' + '+bpd[2]+' + '+bpd[3]+' per day</div></div>'+
+    '<div class="tile"><div class="v">'+Math.floor(ride/60)+' h '+String(ride%60).padStart(2,'0')+'</div><div class="k">on trains</div></div>'+
+    '<div class="tile"><div class="v">'+ntr+'</div><div class="k">trains</div></div>'+
+    '<div class="tile"><div class="v">'+shortest+'′</div><div class="k">shortest stop</div></div>'+
+    '<div class="tile"><div class="v">'+home+'</div><div class="k">home in Zürich, Sunday</div></div>';
+}
+let VARIANT = 'a';
+try{ VARIANT = localStorage.getItem('ktour-variant4') || 'a'; }catch(e){}
+function setVariant(v){
+  VARIANT = v; try{ localStorage.setItem('ktour-variant4', v); }catch(e){}
+  $('btn-a').classList.toggle('on', v==='a'); $('btn-b').classList.toggle('on', v==='b');
+  $('btn-a').setAttribute('aria-selected', v==='a'); $('btn-b').setAttribute('aria-selected', v==='b');
+  renderMap(v); renderStats(v, renderDays(v)); if(LIVE.on) setLive(true);
+}
+$('btn-a').addEventListener('click', ()=>setVariant('a')); $('btn-b').addEventListener('click', ()=>setVariant('b'));
+setVariant(VARIANT==='b' ? 'b' : 'a');
+</script>
+</body></html>

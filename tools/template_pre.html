@@ -1,0 +1,186 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>Kantonstour (Copy)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --page:#f9f9f7; --surface:#fcfcfb; --surface2:#f1f0ec;
+  --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --hair:#e1e0d9; --ring:rgba(11,11,11,.10);
+  --red:#d33a39; --red-soft:rgba(211,58,57,.10);
+  --d1:#2a78d6; --d2:#eb6834; --d3:#1baf7a;
+  --d1s:rgba(42,120,214,.11); --d2s:rgba(235,104,52,.11); --d3s:rgba(27,175,122,.11);
+  --good:#006300; --warn:#8a5a00; --crit:#b02a2a;
+  --lake:#d7e6f7; --canton:#f1f0ec; --canton-line:#d8d7cf;
+  --beer:rgba(237,161,0,.14); --beer-line:#c98500;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#0d0d0d; --surface:#1a1a19; --surface2:#232322;
+    --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --hair:#2c2c2a; --ring:rgba(255,255,255,.10);
+    --red:#e66767; --red-soft:rgba(230,103,103,.14);
+    --d1:#3987e5; --d2:#d95926; --d3:#199e70;
+    --d1s:rgba(88,155,235,.16); --d2s:rgba(240,120,66,.14); --d3s:rgba(45,190,135,.14);
+    --good:#0ca30c; --warn:#fab219; --crit:#e66767;
+    --lake:#1f3a58; --canton:#212120; --canton-line:#3c3c39;
+    --beer:rgba(201,133,0,.16); --beer-line:#eda100;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --surface2:#232322;
+  --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --hair:#2c2c2a; --ring:rgba(255,255,255,.10);
+  --red:#e66767; --red-soft:rgba(230,103,103,.14);
+  --d1:#3987e5; --d2:#d95926; --d3:#199e70;
+  --d1s:rgba(88,155,235,.16); --d2s:rgba(240,120,66,.14); --d3s:rgba(45,190,135,.14);
+  --good:#0ca30c; --warn:#fab219; --crit:#e66767;
+  --lake:#1f3a58; --canton:#212120; --canton-line:#3c3c39;
+  --beer:rgba(201,133,0,.16); --beer-line:#eda100;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--page);color:var(--ink);font-family:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 80px}
+a{color:var(--red)}
+h1,h2,h3{text-wrap:balance;margin:0}
+header{padding:44px 0 10px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--red);display:flex;align-items:center;gap:10px}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+h1{font-weight:900;font-size:clamp(40px,7vw,64px);letter-spacing:-.02em;line-height:1.02;margin:10px 0 6px}
+.sub{color:var(--ink2);font-size:16px;max-width:66ch}
+.verdict{display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:var(--red-soft);border:1px solid var(--red);color:var(--ink);border-radius:999px;padding:7px 16px;font-weight:600;font-size:14px}
+.verdict .dot{width:9px;height:9px;border-radius:50%;background:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:26px 0 8px}
+.tile{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:14px 16px}
+.tile .v{font-size:26px;font-weight:800;letter-spacing:-.01em}
+.tile .v small{font-size:14px;font-weight:600;color:var(--ink2)}
+.tile .k{font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.togglebar{position:sticky;top:0;z-index:30;background:var(--page);padding:12px 0;margin-top:18px;border-bottom:1px solid var(--hair)}
+.toggle{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--ring);border-radius:10px;padding:4px;max-width:680px}
+.toggle button{flex:1;border:0;background:transparent;color:var(--ink2);font:inherit;font-weight:600;font-size:13.5px;padding:9px 10px;border-radius:7px;cursor:pointer}
+.toggle button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.toggle button.on{background:var(--red);color:#fff}
+.toggle button .hint{display:block;font-weight:400;font-size:11.5px;opacity:.85}
+section{margin-top:44px}
+.sechead{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
+.sechead h2{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.sechead .rule{flex:1;height:1px;background:var(--hair)}
+.sechead .tag{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.mapcard{background:var(--surface);border:1px solid var(--ring);border-radius:14px;padding:14px;position:relative}
+#map{position:relative}
+#map svg{display:block;width:100%;height:auto;cursor:grab;touch-action:none}
+#map svg.dragging{cursor:grabbing}
+.zoomctl{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:5px;z-index:5}
+.zoomctl button{width:32px;height:32px;border-radius:8px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);font-size:17px;font-weight:700;cursor:pointer;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.zoomctl button:hover{background:var(--surface2)}
+.zoomctl button:focus-visible{outline:2px solid var(--red)}
+.maphint{position:absolute;bottom:8px;right:12px;font-size:11px;color:var(--muted);pointer-events:none}
+.maplegend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:12px 6px 2px;font-size:13px;color:var(--ink2)}
+.lg{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.lg .sw{width:22px;height:4px;border-radius:2px}
+.lg .pin{width:15px;height:15px;border-radius:50%;background:var(--surface);border:2.5px solid var(--muted)}
+.lg .wk{width:12px;height:12px;background:var(--surface);border:2px dashed var(--muted);transform:rotate(45deg)}
+.stopindex{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--ink2)}
+.stopindex .si{display:flex;gap:8px;align-items:baseline}
+.stopindex .n{font-family:"Spline Sans Mono",monospace;font-weight:700;font-size:11.5px;min-width:20px;text-align:right}
+#tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--page);border-radius:8px;padding:8px 12px;font-size:12.5px;line-height:1.45;max-width:280px;opacity:0;transition:opacity .12s;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion: reduce){#tooltip{transition:none}}
+.day{background:var(--surface);border:1px solid var(--ring);border-radius:14px;overflow:hidden;margin-top:22px}
+.dayhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:16px 20px;border-bottom:1px solid var(--hair);border-top:4px solid var(--dc)}
+.dayhead .dnum{font-weight:900;font-size:19px}
+.dayhead .dnum span{color:var(--dc)}
+.dayhead .droute{color:var(--ink2);font-size:14px}
+.dayhead .dmeta{margin-left:auto;color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:660px}
+td{padding:9px 14px;vertical-align:top;border-top:1px solid var(--hair);font-size:14px}
+tr:first-child td{border-top:0}
+td.t{font-family:"Spline Sans Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap;width:112px;font-weight:600}
+td.t .pl{color:var(--muted);font-weight:400;font-size:12px}
+.trainchip{display:inline-block;font-family:"Spline Sans Mono",monospace;font-weight:700;font-size:12.5px;background:var(--ink);color:var(--page);border-radius:5px;padding:2px 8px;margin-right:8px;white-space:nowrap}
+.dir{color:var(--muted);font-size:12.5px}
+.sbblink{font-size:11.5px;font-weight:700;text-decoration:none;border:1px solid var(--red);border-radius:4px;padding:1px 7px;margin-left:8px;white-space:nowrap;vertical-align:1px}
+.sbblink:hover{background:var(--red-soft)}
+tr.stop td{background:var(--surface2)}
+tr.beerstop td{background:color-mix(in srgb, var(--dcs) 60%, var(--surface))}
+tr.onboard td{background:var(--beer);border-left:3px solid var(--beer-line)}
+.cchip{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:13px;letter-spacing:.02em}
+.cchip .cb{display:inline-block;min-width:34px;text-align:center;background:var(--dc);color:#fff;border-radius:5px;padding:2px 6px;font-size:12.5px}
+.stopmeta{color:var(--ink2);font-size:12.5px;margin-top:2px}
+.mug{display:inline-block;vertical-align:-2px;margin-right:6px}
+.xfer{color:var(--muted);font-size:12px;font-weight:600}
+.notes{display:grid;gap:10px}
+.note{background:var(--surface);border:1px solid var(--ring);border-left:4px solid var(--muted);border-radius:9px;padding:12px 16px;font-size:13.5px;color:var(--ink2)}
+.note b{color:var(--ink)}
+.note.warn{border-left-color:var(--warn)}
+.note.good{border-left-color:var(--good)}
+footer{margin-top:60px;padding-top:16px;border-top:1px solid var(--hair);color:var(--muted);font-size:12.5px;line-height:1.7}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">16 – 18 October 2026 · Fri – Sun · all 26 cantons · trains only, no buses</div>
+  <h1>Kantonstour</h1>
+  <p class="sub">One beer in <b>every</b> canton in three days, entirely by rail — start and end Zürich HB, first night <b>Luzern</b>,
+  second night <b>Biel/Bienne</b>. You hop off in all 26 — two ways to pace it: <b>Option A</b> with relaxed stops of at least 30′,
+  or <b>Option B</b> tight: 15′ is enough for a station beer, and a stop only gets longer where the hourly timetable forces it. Pure train plan — every connection is from the
+  official SBB timetable for these exact dates (tap <b>SBB</b> on any leg to open it live); food and hotels are up to you.</p>
+  <div class="verdict"><span class="dot"></span>Verdict: possible — 26/26 cantons, 26 station stops, home 16:58 (A) or 16:28 (B)</div>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<div class="togglebar"><div class="toggle" role="tablist" aria-label="Variant">
+  <button id="btn-a" role="tab">Option A · Relaxed stops<span class="hint">≥30′ at every station · days end 23:16 / 22:41 / 16:58</span></button>
+  <button id="btn-b" role="tab">Option B · Tight stops<span class="hint">15′ minimum, longer only where forced · days end 20:46 / 21:41 / 16:28</span></button>
+</div></div>
+
+<section>
+  <div class="sechead"><h2>The route</h2><div class="rule"></div><div class="tag" id="maptag"></div></div>
+  <div class="mapcard">
+    <div id="map"></div>
+    <div class="zoomctl">
+      <button id="z-in" aria-label="Zoom in">+</button>
+      <button id="z-out" aria-label="Zoom out">−</button>
+      <button id="z-reset" aria-label="Reset view" style="font-size:13px">⌂</button>
+    </div>
+    <div class="maphint">scroll to zoom · drag to pan</div>
+    <div class="maplegend" id="maplegend"></div>
+    <div class="stopindex" id="stopindex"></div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><h2>Timetable &amp; beer stops</h2><div class="rule"></div><div class="tag">SBB timetable, 16–18.10.2026</div></div>
+  <div id="days"></div>
+</section>
+
+<section>
+  <div class="sechead"><h2>The two walk links</h2><div class="rule"></div><div class="tag">part of the route</div></div>
+  <div class="notes">
+    <div class="note"><b>Altstätten Stadt → Altstätten SG (Friday, 42′ window).</b> The Appenzeller Bahnen rack railway ends at Altstätten Stadt; the SBB Rheintal station is ~1.7 km further down — an easy downhill walk of ~20–25 min. This is what avoids passing through St. Gallen twice.</div>
+    <div class="note"><b>Ziegelbrücke (Friday, 35′ window in A, 29′ in B).</b> The station itself already stands on Glarus soil, but for an honest GL beer walk ~5 min over the Linth channel into Niederurnen (Glarus Nord) and back.</div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><h2>Good to know</h2><div class="rule"></div><div class="tag">verified 23.08.2026</div></div>
+  <div class="notes">
+    <div class="note warn"><b>Everything runs hourly — the schedule is a chain.</b> Miss one train and you usually lose 60 minutes. Set phone timers. Option B's 15–20′ stops leave no margin for a late train — if one slips, fall back to the next hourly service and the rest of the chain shifts by an hour.</div>
+    <div class="note warn"><b>Day lengths:</b> Option A — Fri 07:05–23:16, Sat 07:18–22:41, Sun 08:18–16:58. Option B — Fri 07:05–20:46, Sat 07:18–21:41, Sun 08:18–16:28. Both sleep Luzern, then Biel.</div>
+    <div class="note"><b>The RE 48 briefly crosses Germany</b> (Jestetten corridor before Schaffhausen). Swiss tickets valid, normally no checks — carry an ID.</div>
+    <div class="note"><b>The CJ leg is a train, not a bus:</b> the narrow-gauge red Chemins de fer du Jura from Glovelier through the Franches-Montagnes to La Chaux-de-Fonds. Option A rides it 19:41→20:56, Option B 18:41→19:56 (dusk) — 97′ through the Jura, the best ride of the trip.</div>
+    <div class="note"><b>Drinking your own beer on board is allowed</b> on all trains in this plan (SBB, Thurbo, SOB, Appenzeller Bahnen, Zentralbahn, CJ) and on platforms.</div>
+    <div class="note good"><b>Tickets:</b> three Saver Day Passes (buy early) or a GA — one pass covers everything here, including Appenzeller Bahnen, Zentralbahn and CJ.</div>
+    <div class="note"><b>OLMA fair runs in St. Gallen 8–18 Oct</b> — expect very full trains around St. Gallen on Friday. <b>Re-check the timetable a few days before</b> (sbb.ch) — the SBB buttons on each leg open the live connection.</div>
+  </div>
+</section>
+
+<footer>
+  Timetable: official Swiss public-transport data (transport.opendata.ch / SBB), queried 23.08.2026 for 16–18.10.2026 — annual timetable 2026; re-verify shortly before travel via the SBB links. Map: swisstopo canton geometries via swiss-maps. 26 cantons, 26 beers — drink responsibly. Prost, Santé, Salute, Viva!
+</footer>
+</div>
+
+<div id="tooltip" role="presentation"></div>
+
+<script>

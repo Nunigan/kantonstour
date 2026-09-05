@@ -1,0 +1,217 @@
+const MUG = '<svg class="mug" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3h11a1 1 0 0 1 1 1v2h2.5A2.5 2.5 0 0 1 22 8.5v5a2.5 2.5 0 0 1-2.5 2.5H17v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm12 5v6h2.5a.5.5 0 0 0 .5-.5v-5a.5.5 0 0 0-.5-.5H17ZM7 7v9h2V7H7Zm4 0v9h2V7h-2Z"/></svg>';
+const DAYC = {1:'var(--d1)',2:'var(--d2)',3:'var(--d3)'};
+const DAYCS = {1:'var(--d1s)',2:'var(--d2s)',3:'var(--d3s)'};
+const DAYLBL = {1:'Day 1 · Fri 16.10', 2:'Day 2 · Sat 17.10', 3:'Day 3 · Sun 18.10'};
+const OB = DATA.onboard_b;
+const OB_SET = new Set(OB.map(o=>o.c));
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function stopsList(variant){
+  const days = DATA[variant].days;
+  const stops = [], walks = [];
+  stops.push({n:1, canton:'ZH', station:'Zürich HB', xy:days[0].legs[0].from_xy, day:1, when:'meet 06:45 · beer #1 before the 07:05 departure'});
+  let n = 1;
+  days.forEach(d => d.legs.forEach(l => {
+    if(l.canton){
+      n += 1;
+      stops.push({n, canton:l.canton, station:l.to, xy:l.to_xy, day:d.day,
+        when:'arr '+l.arr+(l.stop_min!=null? ' · '+l.stop_min+'′ stop':' · arrival beer')});
+    } else if((l.note||'').indexOf('walk') >= 0){
+      walks.push({station:l.to, xy:l.to_xy, day:d.day, note:l.note});
+    }
+  }));
+  return {stops, walks};
+}
+
+let zoomApi = null;
+function enableZoom(svg){
+  const vb0 = svg.getAttribute('viewBox').split(' ').map(Number);
+  let vb = vb0.slice();
+  const apply = () => svg.setAttribute('viewBox', vb.join(' '));
+  function zoomAt(cx, cy, f){
+    const r = svg.getBoundingClientRect();
+    const px = vb[0] + (cx - r.left) / r.width * vb[2];
+    const py = vb[1] + (cy - r.top) / r.height * vb[3];
+    let w = vb[2] * f;
+    w = Math.max(vb0[2] / 14, Math.min(vb0[2] * 1.3, w));
+    const h = w * vb0[3] / vb0[2];
+    vb = [px - (px - vb[0]) * (w / vb[2]), py - (py - vb[1]) * (h / vb[3]), w, h];
+    apply();
+  }
+  svg.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY > 0 ? 1.25 : 0.8); }, {passive:false});
+  let drag = null, moved = false;
+  svg.addEventListener('pointerdown', e => { drag = {x:e.clientX, y:e.clientY, vb:vb.slice()}; moved = false; svg.setPointerCapture(e.pointerId); });
+  svg.addEventListener('pointermove', e => {
+    if(!drag) return;
+    if(Math.abs(e.clientX-drag.x) + Math.abs(e.clientY-drag.y) > 3){ moved = true; svg.classList.add('dragging'); }
+    const r = svg.getBoundingClientRect();
+    vb[0] = drag.vb[0] - (e.clientX - drag.x) / r.width * vb[2];
+    vb[1] = drag.vb[1] - (e.clientY - drag.y) / r.height * vb[3];
+    apply();
+  });
+  const end = () => { drag = null; svg.classList.remove('dragging'); };
+  svg.addEventListener('pointerup', end);
+  svg.addEventListener('pointercancel', end);
+  svg.addEventListener('dblclick', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, 0.6); });
+  return {
+    zin(){ const r = svg.getBoundingClientRect(); zoomAt(r.left + r.width/2, r.top + r.height/2, 0.7); },
+    zout(){ const r = svg.getBoundingClientRect(); zoomAt(r.left + r.width/2, r.top + r.height/2, 1.4); },
+    reset(){ vb = vb0.slice(); apply(); },
+  };
+}
+
+function renderMap(variant){
+  const M = DATA.map, beerDay = DATA.beer_day, routes = DATA[variant].routes;
+  const {stops, walks} = stopsList(variant);
+  let s = '<svg viewBox="'+M.viewbox+'" role="img" aria-label="Map of Switzerland with the tour route">';
+  for(const [ab,path] of Object.entries(M.cantons)){
+    const fill = beerDay[ab] ? DAYCS[beerDay[ab]] : 'var(--canton)';
+    s += '<path d="'+path+'" fill="'+fill+'" stroke="var(--canton-line)" stroke-width="1"/>';
+  }
+  s += '<path d="'+M.lakes+'" fill="var(--lake)" stroke="none"/>';
+  for(const [ab,xy] of Object.entries(M.centroids)){
+    s += '<text x="'+xy[0]+'" y="'+xy[1]+'" font-size="9.5" font-weight="600" fill="var(--muted)" text-anchor="middle" opacity=".75">'+ab+'</text>';
+  }
+  for(const d of [1,2,3]) s += '<path d="'+routes[d]+'" fill="none" stroke="var(--surface)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>';
+  for(const d of [1,2,3]) s += '<path d="'+routes[d]+'" fill="none" stroke="'+DAYC[d]+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+  walks.forEach((w,i) => {
+    if(!w.xy) return;
+    s += '<g class="walkmark" data-w="'+i+'"><rect x="'+(w.xy[0]-5)+'" y="'+(w.xy[1]-5)+'" width="10" height="10" transform="rotate(45 '+w.xy[0]+' '+w.xy[1]+')" fill="var(--surface)" stroke="var(--muted)" stroke-width="2" stroke-dasharray="3 2"/></g>';
+  });
+  if(variant === 'b'){
+    for(const o of OB){
+      const xy = M.centroids[o.c];
+      s += '<g class="obbadge" data-ob="'+o.c+'"><rect x="'+(xy[0]-21)+'" y="'+(xy[1]+4)+'" width="42" height="17" rx="8.5" fill="'+DAYC[o.day]+'"/>' +
+        '<g transform="translate('+(xy[0]-15)+','+(xy[1]+6.5)+') scale(0.5)"><path fill="#fff" d="M5 3h11a1 1 0 0 1 1 1v2h2.5A2.5 2.5 0 0 1 22 8.5v5a2.5 2.5 0 0 1-2.5 2.5H17v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm12 5v6h2.5a.5.5 0 0 0 .5-.5v-5a.5.5 0 0 0-.5-.5H17ZM7 7v9h2V7H7Zm4 0v9h2V7h-2Z"/></g>' +
+        '<text x="'+(xy[0]+1)+'" y="'+(xy[1]+16.5)+'" font-size="9" font-weight="700" fill="#fff">'+o.c+'</text></g>';
+    }
+  }
+  for(const st of stops){
+    if(!st.xy) continue;
+    s += '<g class="stopmark" data-n="'+st.n+'">' +
+      '<circle cx="'+st.xy[0]+'" cy="'+st.xy[1]+'" r="9" fill="var(--surface)" stroke="'+DAYC[st.day]+'" stroke-width="2.6"/>' +
+      '<text x="'+st.xy[0]+'" y="'+(st.xy[1]+3.4)+'" font-size="9.5" font-weight="800" fill="var(--ink)" text-anchor="middle" font-family="Spline Sans Mono,monospace">'+st.n+'</text></g>';
+  }
+  s += '</svg>';
+  $('map').innerHTML = s;
+  const svg = $('map').querySelector('svg');
+  zoomApi = enableZoom(svg);
+  $('maptag').textContent = variant==='b' ? 'option B · 26 stops · 15′ minimum' : 'option A · 26 stops · 30′ minimum';
+
+  let lg = '';
+  for(const d of [1,2,3]) lg += '<span class="lg"><span class="sw" style="background:'+DAYC[d]+'"></span>'+DAYLBL[d]+'</span>';
+  lg += '<span class="lg"><span class="pin"></span>beer stop</span><span class="lg"><span class="wk"></span>walk link</span>';
+  if(variant==='b') lg += '<span class="lg" style="color:var(--beer-line)">'+MUG+'beer on board</span>';
+  $('maplegend').innerHTML = lg;
+  $('stopindex').innerHTML = stops.map(st =>
+    '<span class="si"><span class="n" style="color:'+DAYC[st.day]+'">'+st.n+'</span><span>'+esc(st.station)+' · <b>'+st.canton+'</b></span></span>').join('');
+
+  const tt = $('tooltip');
+  const move = e => {tt.style.left = Math.min(e.clientX+14, innerWidth-300)+'px'; tt.style.top = (e.clientY+14)+'px';};
+  document.querySelectorAll('.stopmark').forEach(g => {
+    const st = stops.find(x=>String(x.n)===g.dataset.n);
+    g.addEventListener('pointerenter', () => {tt.innerHTML = '<b>'+st.n+' · '+esc(st.station)+' ('+st.canton+')</b><br>'+esc(st.when); tt.style.opacity=1;});
+    g.addEventListener('pointermove', move);
+    g.addEventListener('pointerleave', () => tt.style.opacity=0);
+  });
+  document.querySelectorAll('.walkmark').forEach(g => {
+    const w = walks[+g.dataset.w];
+    g.addEventListener('pointerenter', () => {tt.innerHTML = '<b>Walk link · '+esc(w.station)+'</b><br>'+esc(w.note); tt.style.opacity=1;});
+    g.addEventListener('pointermove', move);
+    g.addEventListener('pointerleave', () => tt.style.opacity=0);
+  });
+  document.querySelectorAll('.obbadge').forEach(g => {
+    const o = OB.find(x=>x.c===g.dataset.ob);
+    g.addEventListener('pointerenter', () => {tt.innerHTML = '<b>'+o.c+' — beer on board</b><br>'+o.mins+'′ inside · '+esc(o.note); tt.style.opacity=1;});
+    g.addEventListener('pointermove', move);
+    g.addEventListener('pointerleave', () => tt.style.opacity=0);
+  });
+}
+
+function renderDays(variant){
+  const days = DATA[variant].days;
+  const bpd = {1:0,2:0,3:0};
+  let out = '';
+  days.forEach(d => {
+    const dc = DAYC[d.day], dcs = DAYCS[d.day];
+    let rows = '';
+    if(d.day===1){
+      rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">06:45<div class="pl">meet up</div></td><td colspan="2">' +
+        '<span class="cchip"><span class="cb" style="background:'+dc+'">ZH</span> Zürich HB — beer #1 before departure</span>' +
+        '<div class="stopmeta">20′ until the 07:05 train</div></td></tr>';
+      bpd[1]++;
+    }
+    d.legs.forEach((l, li) => {
+      l.trains.forEach((t, ti) => {
+        if(ti>0){
+          const prev = l.trains[ti-1];
+          const wait = (parseInt(t.dep_time)*60+ +t.dep_time.slice(3)) - (parseInt(prev.arr_time)*60+ +prev.arr_time.slice(3));
+          rows += '<tr><td class="t"></td><td colspan="2" class="xfer">↳ change in '+esc(t.dep_station)+' ('+wait+'′)</td></tr>';
+        }
+        rows += '<tr><td class="t">'+t.dep_time+' → '+t.arr_time+'<div class="pl">Gl. '+esc(t.dep_platform||'–')+' → '+esc(t.arr_platform||'–')+'</div></td>' +
+          '<td colspan="2"><span class="trainchip">'+esc(t.train)+'</span>'+esc(t.dep_station)+' → '+esc(t.arr_station)+
+          ' <span class="dir">(direction '+esc(t.dir||'')+')</span>' +
+          (ti===0 && l.sbb ? '<a class="sbblink" href="'+esc(l.sbb)+'" target="_blank" rel="noopener">SBB ↗</a>' : '') + '</td></tr>';
+      });
+      if(variant==='b'){
+        OB.filter(o => o.day===d.day && o.leg===li).forEach(o => {
+          rows += '<tr class="onboard"><td class="t">'+o.mins+'′ inside</td><td colspan="2">'+MUG+'<b>'+o.c+' beer on board</b> — '+esc(DATA.canton_names[o.c])+' · '+esc(o.note)+'</td></tr>';
+          bpd[d.day]++;
+        });
+      }
+      if(l.canton){
+        bpd[d.day]++;
+        rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'<div class="pl">'+(l.stop_min!=null? 'stop':'arrival beer')+'</div></td>' +
+          '<td colspan="2"><span class="cchip"><span class="cb" style="background:'+dc+'">'+l.canton+'</span> '+esc(l.to)+'</span>' +
+          (l.note? '<div class="stopmeta">'+esc(l.note)+'</div>':'') + '</td></tr>';
+      } else {
+        rows += '<tr class="stop"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'</td><td colspan="2"><span class="dir">'+esc(l.to)+' — '+esc(l.note||'transfer')+'</span></td></tr>';
+      }
+    });
+    out += '<div class="day"><div class="dayhead" style="--dc:'+dc+'">' +
+      '<span class="dnum"><span>Day '+d.day+'</span> · '+['','Friday 16.10.','Saturday 17.10.','Sunday 18.10.'][d.day]+'</span>' +
+      '<span class="droute">'+esc(d.legs[0].from)+' → '+esc(d.legs[d.legs.length-1].to)+'</span>' +
+      '<span class="dmeta">'+d.legs[0].dep+' – '+d.legs[d.legs.length-1].arr+' · '+bpd[d.day]+' beers</span></div>' +
+      '<div class="tscroll"><table>'+rows+'</table></div></div>';
+  });
+  $('days').innerHTML = out;
+  return bpd;
+}
+
+function renderStats(variant, bpd){
+  const days = DATA[variant].days;
+  const ride = days.reduce((a,d)=>a+d.legs.reduce((x,l)=>x+l.duration_min,0),0);
+  const ntr = days.reduce((a,d)=>a+d.legs.reduce((x,l)=>x+l.trains.length,0),0);
+  const home = days[2].legs[days[2].legs.length-1].arr;
+  const shortest = Math.min(...days.flatMap(d=>d.legs.filter(l=>l.canton && l.stop_min!=null).map(l=>l.stop_min)));
+  $('stats').innerHTML =
+    '<div class="tile"><div class="v">26 <small>of 26</small></div><div class="k">cantons — complete</div></div>' +
+    '<div class="tile"><div class="v">'+(bpd[1]+bpd[2]+bpd[3])+'</div><div class="k">beers · '+bpd[1]+' + '+bpd[2]+' + '+bpd[3]+' per day</div></div>' +
+    '<div class="tile"><div class="v">'+Math.floor(ride/60)+' h '+String(ride%60).padStart(2,'0')+'</div><div class="k">on trains</div></div>' +
+    '<div class="tile"><div class="v">'+ntr+'</div><div class="k">trains</div></div>' +
+    '<div class="tile"><div class="v">'+shortest+'′</div><div class="k">shortest stop</div></div>' +
+    '<div class="tile"><div class="v">'+home+'</div><div class="k">home in Zürich, Sunday</div></div>';
+}
+
+let VARIANT = 'a';
+try{ VARIANT = localStorage.getItem('ktour-variant2') || 'a'; }catch(e){}
+function setVariant(v){
+  VARIANT = v;
+  try{ localStorage.setItem('ktour-variant2', v); }catch(e){}
+  $('btn-a').classList.toggle('on', v==='a');
+  $('btn-b').classList.toggle('on', v==='b');
+  $('btn-a').setAttribute('aria-selected', v==='a');
+  $('btn-b').setAttribute('aria-selected', v==='b');
+  renderMap(v);
+  renderStats(v, renderDays(v));
+}
+$('btn-a').addEventListener('click', ()=>setVariant('a'));
+$('btn-b').addEventListener('click', ()=>setVariant('b'));
+$('z-in').addEventListener('click', ()=>zoomApi && zoomApi.zin());
+$('z-out').addEventListener('click', ()=>zoomApi && zoomApi.zout());
+$('z-reset').addEventListener('click', ()=>zoomApi && zoomApi.reset());
+setVariant(VARIANT==='b' ? 'b' : 'a');
+</script>
+
+</body></html>
