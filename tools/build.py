@@ -57,45 +57,48 @@ print('html bytes',len(html))
 def table(P,date_of):
     md=''
     for d in P['days']:
-        md+=f"\n### {['','Friday','Saturday','Sunday'][d['day']]} {d['date'][8:10]}.{d['date'][5:7]}.{d['date'][:4]}\n\n| Dep | From | Arr | To | Train(s) | Beer | SBB |\n|---|---|---|---|---|---|---|\n"
+        md+=f"\n### {['','Freitag','Samstag','Sonntag'][d['day']]} {d['date'][8:10]}.{d['date'][5:7]}.{d['date'][:4]}\n\n| Ab | Von | An | Nach | Zug/Züge | Bier | SBB |\n|---|---|---|---|---|---|---|\n"
         for li,l in enumerate(d['legs']):
             tr=' + '.join(t['train'] for t in l['trains'])
-            if l['transfers']: tr+=' (change: '+', '.join(t['dep_station'] for t in l['trains'][1:])+')'
+            if l['transfers']: tr+=' (Umsteigen: '+', '.join(t['dep_station'] for t in l['trains'][1:])+')'
             ob=[o for o in P['onboard'] if o['day']==d['day'] and o['leg']==li]
-            for o in ob: tr+=f" · 🚆🍺 **{o['c']}** on board ≈{o['mins']}′ — {o['note']}"
+            for o in ob: tr+=f" · 🚆🍺 **{o['c']}** im Zug ≈{o['mins']}′ – {o['note']}"
             if l['canton']:
-                beer=f"🍺 **{l['canton']}** — {l['to']}"+(f" ({l['stop_min']}′)" if l['stop_min'] is not None else ' (arrival beer, overnight)' if 'overnight' in l['note'] else '')
-            elif 'walk' in l['note']: beer="🚶 walk 1.7 km (~25′) to Altstätten SG"
-            elif 'home' in l['note']: beer='🏁 home'
-            else: beer=f"↔ change ({l['stop_min']}′) — {l['note']}"
+                beer=f"🍺 **{l['canton']}** – {l['to']}"+(f" ({l['stop_min']}′)" if l['stop_min'] is not None else ' (Ankunftsbier, Übernachtung)' if 'Übernachtung' in l['note'] else '')
+            elif l.get('walk'): beer="🚶 1.7 km (~25′) zu Fuss nach Altstätten SG"
+            elif 'Hause' in l['note']: beer='🏁 zuhause'
+            else: beer=f"↔ Umsteigen ({l['stop_min']}′) – {l['note']}"
             pl=f" Gl. {l['trains'][0]['dep_platform']}" if l['trains'][0]['dep_platform'] else ''
             md+=f"| **{l['dep']}**{pl} | {l['from']} | {l['arr']} | {l['to']} | {tr} | {beer} | [SBB]({l['sbb']}) |\n"
     return md
-md=f'''# Kantonstour 16.–18.10.2026 — all 26 cantons by train
+md=f'''# Kantonstour 16.–18.10.2026 – alle 26 Kantone mit dem Zug
 
-One beer in every canton, trains only (no buses), start & end **Zürich HB**, first night **Luzern**, second night **Neuchâtel**.
-Times from the official SBB timetable (queried 05.09.2026). Click **SBB** on any leg to open the live connection — re-check before the trip.
+Ein Bier in jedem Kanton, nur Zug (kein Bus), Start und Ziel **Zürich HB**, Übernachtung **Luzern** und **Neuenburg**.
+Zeiten aus dem SBB-Fahrplan (abgefragt 05.09.2026). **SBB** öffnet die Verbindung live – vor der Reise nochmals prüfen.
 
-Beer #1: **Zürich HB ~06:45**, before the 07:05 departure. Both options use tight stops (15′ minimum at a beer stop, longer only where the hourly timetable forces it). A: 12 + 10 + 4 beers per day, B: 12 + 9 + 5.
+Bier Nr. 1: **Zürich HB ~06:45**, vor der Abfahrt 07:05. Beide Optionen mit knappen Halten (mind. 15′ pro Bierhalt, länger nur wo der Stundentakt es erzwingt). A: 12 + 9 + 5 Biere pro Tag, B: 12 + 10 + 4.
 
-## Option A — beer on board ({nA} stops + {nOB} beers on the train, Sun home {home(A)})
+## Option A – Bier im Zug ({nA} Halte + {nOB} Biere im Zug, So zuhause {home(A)})
 
-You only get off where you would change trains anyway; {nOB} cantons are drunk on the train while it crosses them (🚆🍺 rows, with the stretch to open the can on). Fri 07:05–{A['days'][0]['legs'][-1]['arr']} · Sat 07:18–{A['days'][1]['legs'][-1]['arr']} · Sun 08:18–{home(A)}.
+Aussteigen nur, wo ohnehin umgestiegen wird; {nOB} Kantone werden im Zug getrunken (🚆🍺-Zeilen, mit dem Abschnitt zum Öffnen). Fr 07:05–{A['days'][0]['legs'][-1]['arr']} · Sa 07:18–{A['days'][1]['legs'][-1]['arr']} · So {A['days'][2]['legs'][0]['dep']}–{home(A)}.
 {table(A,None)}
-## Option B — all beers on the ground (26 stops, Sun home {home(B)})
+## Option B – alles am Boden (26 Halte, So zuhause {home(B)})
 
-Off the train in every canton, 15′ minimum. Fri 07:05–{B['days'][0]['legs'][-1]['arr']} · Sat 07:18–{B['days'][1]['legs'][-1]['arr']} · Sun 08:18–{home(B)}.
+In jedem Kanton aussteigen, mind. 15′. Fr 07:05–{B['days'][0]['legs'][-1]['arr']} · Sa 07:18–{B['days'][1]['legs'][-1]['arr']} · So {B['days'][2]['legs'][0]['dep']}–{home(B)}.
 {table(B,None)}
-## Route notes (trains)
+## Hinweise
 
-- **Appenzell → Altstätten:** Appenzeller Bahnen rack railway via Gais to Altstätten Stadt, then walk ~1.7 km downhill (~20–25′) to Altstätten SG for the IR 13 — avoids passing St. Gallen twice.
-- **Graubünden / Glarus:** turn around in Landquart (GR beer there, no detour to Chur), then IR 35 along the Walensee to Ziegelbrücke — station on Glarus soil; ~5′ walk over the Linth into Niederurnen for an honest GL beer. Both options get off here.
-- **Voralpen-Express** Pfäffikon SZ → Luzern (direct, via Arth-Goldau): Option A's SZ beer, ~60′ inside Schwyz.
-- **Gotthard:** IR 26 / IR 46 "Treno Gottardo" over the mountain line (Wassen, Göschenen) to Airolo; Option A's UR beer is drunk between Brunnen and Göschenen.
-- **No Zürich in between:** Saturday runs Airolo → Arth-Goldau → Zug (ZG stop), then Option A takes the S 1 to Rotkreuz and the S 26 through the Freiamt (Muri, Wohlen, Lenzburg, Aarau) to Olten with the AG beer on board (≈44′); Option B goes Zug → Luzern → Sursee → Zofingen (AG stop) → Olten.
-- **CJ:** Option A only — Delémont → Glovelier (R 2), then the narrow-gauge Chemins de fer du Jura to La Chaux-de-Fonds (75′) with the JU beer on board, then RE 6 down to Neuchâtel for the night. Option B takes the IC from Delémont to Biel (BE beer) and on to Neuchâtel (NE beer, overnight).
-- **Sunday (Option A):** Neuchâtel → Genève via Yverdon (VD on board), IR 90 to Martigny, IR 90 back to Lausanne, IC 1 via Fribourg and Bern (FR and BE on board) to Zürich.
-- **Risks:** everything is hourly — a missed train costs ~60′ and shifts the rest of the day. RE 48 crosses German territory before Schaffhausen (carry ID). OLMA in St. Gallen 8–18 Oct: full trains on Friday. Re-check sbb.ch a few days before.
+- **Appenzell → Altstätten:** Zahnradbahn via Gais nach Altstätten Stadt, dann 1.7 km bergab (~20–25′) zum SBB-Bahnhof Altstätten SG.
+- **Graubünden / Glarus:** Wende in Landquart (GR-Bier dort, kein Abstecher nach Chur), dann dem Walensee entlang nach Ziegelbrücke – Bahnhof im Glarnerland; 5′ über die Linth nach Niederurnen für ein ehrliches GL-Bier.
+- **Voralpen-Express** Pfäffikon SZ → Luzern: SZ-Bier in Option A, ~60′ im Kanton Schwyz.
+- **Gotthard:** IR 26 / IR 46 über die Bergstrecke nach Airolo; UR-Bier in Option A zwischen Brunnen und Göschenen.
+- **Nicht über Zürich:** Samstag Airolo → Arth-Goldau → Zug (ZG-Halt), dann A: S 1 nach Rotkreuz und S 26 durchs Freiamt (Muri, Wohlen, Lenzburg, Aarau) nach Olten mit AG-Bier im Zug (≈44′); B: Zug → Luzern → Sursee → Zofingen (AG-Halt) → Olten.
+- **CJ:** nur Option A – Delémont → Glovelier (R 2), dann die Schmalspurbahn nach La Chaux-de-Fonds (75′) mit JU-Bier im Zug, RE 6 runter nach Neuenburg. Option B: IC Delémont → Biel (BE-Bier) → Neuenburg (NE-Bier, Übernachtung).
+- **Sonntag (A):** Neuenburg → Genf via Yverdon (VD im Zug), IR 90 nach Martigny und zurück nach Lausanne, IC 1 via Freiburg und Bern (FR und BE im Zug) nach Zürich.
+- **Risiken:** alles stündlich – ein verpasster Zug kostet ~60′. RE 48 fährt kurz durch Deutschland (Ausweis). OLMA in St. Gallen 8.–18.10.: volle Züge am Freitag. Fahrplan kurz vorher auf sbb.ch prüfen.
+- **Tickets:** 3× Spartageskarte oder GA – gilt auch für Appenzeller Bahnen, Zentralbahn, CJ. Eigenes Bier ist in allen Zügen und auf den Perrons erlaubt.
+
+Interaktive Karte (unsere Linien, Züge live): https://nunigan.github.io/kantonstour/
 '''
 open(OUT+'/kantonstour.md','w').write(md)
 print('md bytes',len(md))

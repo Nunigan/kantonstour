@@ -9,30 +9,30 @@ def L(frm,to,canton,onboard=(),via=None,direct=False,note='',min_stop=None,start
     return dict(frm=frm,to=to,canton=canton,onboard=list(onboard),via=via,direct=direct,note=note,min_stop=min_stop,start=start,walk_after=walk_after,onb_min=onb_min or ONB_MIN)
 PLAN_A=[
  (F,[
-  L('Zürich HB','Schaffhausen','SH',note='beer #1 ZH at HB kiosk before departure',start='07:05'),
+  L('Zürich HB','Schaffhausen','SH',note='Bier Nr. 1 ZH am HB-Kiosk vor der Abfahrt',start='07:05'),
   L('Schaffhausen','St. Gallen','SG',onboard=['TG']),
   L('St. Gallen','Appenzell','AI',onboard=['AR']),
-  L('Appenzell','Altstätten Stadt',None,note="rack railway down; walk 1.7 km (~25') to Altstätten SG",walk_after=40),
-  L('Altstätten SG','Landquart','GR',note='turn around here — no detour to Chur'),
-  L('Landquart','Ziegelbrücke','GL',note='walk over the Linth bridge into Glarus Nord'),
-  L('Ziegelbrücke','Pfäffikon SZ',None,note='change to the Voralpen-Express'),
-  L('Pfäffikon SZ','Luzern',None,onboard=['SZ'],direct=True,note='change for the NW/OW loop'),
+  L('Appenzell','Altstätten Stadt',None,note="Zahnradbahn runter, dann 1.7 km (~25′) zu Fuss nach Altstätten SG",walk_after=40),
+  L('Altstätten SG','Landquart','GR',note='Wende hier – kein Abstecher nach Chur'),
+  L('Landquart','Ziegelbrücke','GL',note='5′ über die Linth nach Glarus Nord'),
+  L('Ziegelbrücke','Pfäffikon SZ',None,note='Umsteigen auf den Voralpen-Express'),
+  L('Pfäffikon SZ','Luzern',None,onboard=['SZ'],direct=True,note='Umsteigen für die NW/OW-Schlaufe'),
   L('Luzern','Hergiswil NW','NW'),
   L('Hergiswil NW','Sarnen','OW'),
-  L('Sarnen','Luzern','LU',note='arrival beer — overnight Luzern'),
+  L('Sarnen','Luzern','LU',note='Ankunftsbier – Übernachtung Luzern'),
  ]),
  (SA,[
-  L('Luzern','Airolo','TI',onboard=['UR'],start='07:00',note='Treno Gottardo over the mountain line'),
+  L('Luzern','Airolo','TI',onboard=['UR'],start='07:00',note='Treno Gottardo über die Bergstrecke'),
   L('Airolo','Zug','ZG'),
-  L('Zug','Olten','SO',onboard=['AG'],via='Muri AG',note='S 26 through the Freiamt — never through Zürich'),
+  L('Zug','Olten','SO',onboard=['AG'],via='Muri AG',note='S 26 durchs Freiamt – nicht über Zürich'),
   L('Olten','Basel SBB','BS',onboard=['BL']),
-  L('Basel SBB','La Chaux-de-Fonds','NE',onboard=['JU'],via='Glovelier',note='CJ — the classic red Jura train'),
-  L('La Chaux-de-Fonds','Neuchâtel',None,note='down to the lake — overnight Neuchâtel'),
+  L('Basel SBB','La Chaux-de-Fonds','NE',onboard=['JU'],via='Glovelier',note='CJ – die rote Jurabahn'),
+  L('La Chaux-de-Fonds','Neuchâtel',None,note='runter an den See – Übernachtung Neuenburg'),
  ]),
  (SU,[
   L('Neuchâtel','Genève','GE',onboard=['VD'],start='08:00'),
   L('Genève','Martigny','VS'),
-  L('Martigny','Zürich HB',None,onboard=['FR','BE'],via='Fribourg/Freiburg',note='home'),
+  L('Martigny','Zürich HB',None,onboard=['FR','BE'],via='Fribourg/Freiburg',note='nach Hause'),
  ]),
 ]
 def tname(s):
@@ -46,18 +46,18 @@ def xy(name):
     if name in STXY: return STXY[name]
     lat,lon,_,_=coords(name); return to_svg(lat,lon)
 ONB_NOTES={
- 'TG':"S 1 along the Rhine, the Untersee and Lake Constance — Schlatt TG → Roggwil-Berg, the longest beer of the trip",
- 'AR':"Lustmühle → Gais, climbing through Appenzellerland",
+ 'TG':"S 1 dem Rhein, Untersee und Bodensee entlang – Schlatt TG → Roggwil-Berg, das längste Bier der Tour",
+ 'AR':"Lustmühle → Gais, bergauf durchs Appenzellerland",
  'GL':"Mühlehorn → Ziegelbrücke on the S 17 along the Walensee; finish it on the S 25 as far as Bilten (still Glarus) — the tightest one",
- 'SZ':"Voralpen-Express Pfäffikon → Küssnacht: Biberbrugg, Rothenthurm, Arth-Goldau — all Schwyz",
- 'UR':"Brunnen → Göschenen up the Gotthard north ramp, past the Wassen church three times",
+ 'SZ':"Voralpen-Express Pfäffikon → Küssnacht: Biberbrugg, Rothenthurm, Arth-Goldau – alles Schwyz",
+ 'UR':"Brunnen → Göschenen die Gotthard-Nordrampe hoch, dreimal an der Kirche von Wassen vorbei",
  'ZG':"Walchwil → Baar along Lake Zug — the train stops in Zug on the way",
- 'AG':"Oberrüti → Aarau on the S 26 through the Freiamt — Muri, Wohlen, Lenzburg, Aarau — nearly the whole ride is Aargau",
- 'BL':"Hauenstein tunnel → Pratteln: Sissach, Liestal and the Ergolz valley",
- 'JU':"Delémont → La Chaux-d'Abel on the CJ through the Franches-Montagnes",
- 'VD':"Yverdon → Renens along Lake Neuchâtel and across the Gros-de-Vaud",
- 'FR':"Palézieux → Flamatt: Romont, Fribourg and the Saane bridges",
- 'BE':"Flamatt → Herzogenbuchsee through Bern — the last one, on the way home",
+ 'AG':"Oberrüti → Aarau auf der S 26 durchs Freiamt – Muri, Wohlen, Lenzburg, Aarau",
+ 'BL':"Hauensteintunnel → Pratteln: Sissach, Liestal und das Ergolztal",
+ 'JU':"Delémont → La Chaux-d'Abel auf der CJ durch die Freiberge",
+ 'VD':"Yverdon → Renens dem Neuenburgersee entlang und durch den Gros-de-Vaud",
+ 'FR':"Palézieux → Flamatt: Romont, Freiburg und die Saanebrücken",
+ 'BE':"Flamatt → Herzogenbuchsee durch Bern – das letzte, auf dem Heimweg",
 }
 def candidates(leg,date,earliest):
     t=hm(earliest) if earliest else leg['start']
@@ -101,7 +101,7 @@ def run(plan):
             trains=[{'train':tname(s),'dir':s['dir'],'dep_station':s['dep_station'],'dep_time':s['dep_time'],'dep_platform':s['dep_platform'],
                      'arr_station':s['arr_station'],'arr_time':s['arr_time'],'arr_platform':s['arr_platform']} for s in c['trains']]
             rec={'from':leg['frm'],'to':leg['to'],'canton':leg['canton'],'note':leg['note'],'dep':hm(c['dep']),'arr':hm(c['arr']),
-                 'duration_min':c['duration_min'],'transfers':c['transfers'],'trains':trains,'sbb':sbb(c),'from_xy':xy(leg['frm']),'to_xy':xy(leg['to']),'stop_min':None}
+                 'duration_min':c['duration_min'],'transfers':c['transfers'],'trains':trains,'sbb':sbb(c),'from_xy':xy(leg['frm']),'to_xy':xy(leg['to']),'stop_min':None,'walk':bool(leg['walk_after'])}
             for ab in leg['onboard']:
                 onboard.append({'c':ab,'day':day,'leg':li,'mins':cm[ab],'note':ONB_NOTES.get(ab,f"{wh[ab][0]} → {wh[ab][1]}")})
             if out: out[-1]['stop_min']=int((c['dep']-prev_arr).total_seconds()//60)
@@ -117,38 +117,38 @@ def run(plan):
     return {'days':days,'routes':routes,'onboard':onboard}
 PLAN_B=[
  (F,[
-  L('Zürich HB','Schaffhausen','SH',note='beer #1 ZH at HB kiosk before departure',start='07:05'),
+  L('Zürich HB','Schaffhausen','SH',note='Bier Nr. 1 ZH am HB-Kiosk vor der Abfahrt',start='07:05'),
   L('Schaffhausen','Frauenfeld','TG'),
   L('Frauenfeld','St. Gallen','SG'),
   L('St. Gallen','Teufen AR','AR'),
   L('Teufen AR','Appenzell','AI'),
-  L('Appenzell','Altstätten Stadt',None,note="rack railway down; walk 1.7 km (~25') to Altstätten SG",walk_after=40),
-  L('Altstätten SG','Landquart','GR',note='turn around here — no detour to Chur'),
-  L('Landquart','Ziegelbrücke','GL',note='walk over the Linth bridge into Glarus Nord'),
+  L('Appenzell','Altstätten Stadt',None,note="Zahnradbahn runter, dann 1.7 km (~25′) zu Fuss nach Altstätten SG",walk_after=40),
+  L('Altstätten SG','Landquart','GR',note='Wende hier – kein Abstecher nach Chur'),
+  L('Landquart','Ziegelbrücke','GL',note='5′ über die Linth nach Glarus Nord'),
   L('Ziegelbrücke','Pfäffikon SZ','SZ'),
-  L('Pfäffikon SZ','Luzern',None,direct=True,note='Voralpen-Express direct — change for the NW/OW loop'),
+  L('Pfäffikon SZ','Luzern',None,direct=True,note='Voralpen-Express direkt – Umsteigen für die NW/OW-Schlaufe'),
   L('Luzern','Hergiswil NW','NW'),
   L('Hergiswil NW','Sarnen','OW'),
-  L('Sarnen','Luzern','LU',note='arrival beer — overnight Luzern'),
+  L('Sarnen','Luzern','LU',note='Ankunftsbier – Übernachtung Luzern'),
  ]),
  (SA,[
   L('Luzern','Flüelen','UR',start='07:00'),
-  L('Flüelen','Airolo','TI',note='Treno Gottardo over the mountain line'),
+  L('Flüelen','Airolo','TI',note='Treno Gottardo über die Bergstrecke'),
   L('Airolo','Zug','ZG'),
-  L('Zug','Zofingen','AG',note='via Luzern and Sursee — never through Zürich'),
+  L('Zug','Zofingen','AG',note='via Luzern und Sursee – nicht über Zürich'),
   L('Zofingen','Olten','SO'),
   L('Olten','Liestal','BL'),
   L('Liestal','Basel SBB','BS'),
   L('Basel SBB','Delémont','JU'),
   L('Delémont','Biel/Bienne','BE'),
-  L('Biel/Bienne','Neuchâtel','NE',note='arrival beer — overnight Neuchâtel'),
+  L('Biel/Bienne','Neuchâtel','NE',note='Ankunftsbier – Übernachtung Neuenburg'),
  ]),
  (SU,[
   L('Neuchâtel','Genève','GE',start='08:00',note='via Yverdon'),
   L('Genève','Lausanne','VD'),
   L('Lausanne','Martigny','VS'),
   L('Martigny','Fribourg/Freiburg','FR'),
-  L('Fribourg/Freiburg','Zürich HB',None,note='home'),
+  L('Fribourg/Freiburg','Zürich HB',None,note='nach Hause'),
  ]),
 ]
 if __name__=='__main__':

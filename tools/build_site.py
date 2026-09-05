@@ -54,7 +54,7 @@ for P in (A,B):
             if sig not in net: net[sig]=[[round(y,4),round(x,4)] for y,x in p]
         L.pop('paths',None)
 open(SITE+'/network.js','w').write('window.KT_NET='+json.dumps(list(net.values()),separators=(',',':'))+';\n')
-DATA={'a':A,'b':B,'beer_day':{'a':beer_day(A),'b':beer_day(B)},'canton_names':v4['canton_names'],'cantons':cantons,'lakes':lakes}
+DATA={'a':A,'b':B,'beer_day':{'a':beer_day(A),'b':beer_day(B)},'canton_names':{**v4['canton_names'],'GE':'Genf','NE':'Neuenburg','FR':'Freiburg','VS':'Wallis','TI':'Tessin','VD':'Waadt'},'cantons':cantons,'lakes':lakes}
 print('network features',len(net),'bytes',os.path.getsize(SITE+'/network.js'))
 open(SITE+'/data.js','w').write('window.KT='+json.dumps(DATA,ensure_ascii=False,separators=(',',':'))+';\n')
 # ---------- page ----------
@@ -64,7 +64,7 @@ css=css.replace('#map svg{display:block;width:100%;height:auto;cursor:grab;touch
 leaflet_css=open(S+'/leaflet.css').read()
 dayA=[d['legs'][-1]['arr'] for d in A['days']]; dayB=[d['legs'][-1]['arr'] for d in B['days']]
 html=f'''<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kantonstour</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap">
 <style>{leaflet_css}</style>
@@ -89,27 +89,26 @@ html=f'''<!doctype html>
 </style></head><body>
 <div class="wrap">
 <header>
-  <div class="eyebrow">16 – 18 October 2026 · Fri – Sun · all 26 cantons · trains only, no buses</div>
+  <div class="eyebrow">16.–18. Oktober 2026 · Fr–So · alle 26 Kantone · nur Zug, kein Bus</div>
   <h1>Kantonstour</h1>
-  <p class="sub">One beer in <b>every</b> canton in three days, entirely by rail — start and end Zürich HB, first night <b>Luzern</b>,
-  second night <b>Neuchâtel</b>. Two ways to do it, both with tight stops: <b>Option A</b> drinks {nOB} of the 26 beers <b>on the train</b> and only gets off
-  where you would change trains anyway ({nA} stops); <b>Option B</b> gets off in <b>all 26</b> cantons, 15′ minimum per stop, longer only where the hourly timetable
-  forces it. Zürich is start and finish only — in between the route never passes through it, and it turns around in Landquart rather than Chur. Pure train plan — every connection is from the official SBB timetable for these exact dates (tap <b>SBB</b> on any leg to open it live); food and hotels are up to you.</p>
-  <div class="verdict"><span class="dot"></span>Verdict: possible — 26/26 cantons · A: {nA} stops + {nOB} on board, home {home(A)} · B: 26 stops, home {home(B)}</div>
+  <p class="sub">Ein Bier in <b>jedem</b> Kanton in drei Tagen, nur mit dem Zug. Start und Ziel Zürich HB, Übernachtung in <b>Luzern</b> und <b>Neuenburg</b>.
+  <b>Option A</b> trinkt {nOB} der 26 Biere <b>im Zug</b> und steigt nur aus, wo ohnehin umgestiegen wird ({nA} Halte). <b>Option B</b> steigt in <b>allen 26</b> Kantonen aus, mindestens 15′ pro Halt.
+  Zürich nur am Anfang und am Ende, Wende in Landquart statt Chur. Alle Verbindungen aus dem SBB-Fahrplan für diese Daten – <b>SBB</b> öffnet die Verbindung live.</p>
+  <div class="verdict"><span class="dot"></span>Machbar – 26/26 Kantone · A: {nA} Halte + {nOB} im Zug, zuhause {home(A)} · B: 26 Halte, zuhause {home(B)}</div>
 </header>
 <div class="stats" id="stats"></div>
 <div class="togglebar"><div class="toggle" role="tablist" aria-label="Variant">
-  <button id="btn-a" role="tab">Option A · Beer on board<span class="hint">{nA} stops + {nOB} beers on the train · days end {ends(A)}</span></button>
-  <button id="btn-b" role="tab">Option B · All on the ground<span class="hint">26 stops, 15′ minimum · days end {ends(B)}</span></button>
+  <button id="btn-a" role="tab">Option A · Bier im Zug<span class="hint">{nA} Halte + {nOB} Biere im Zug · Tagesende {ends(A)}</span></button>
+  <button id="btn-b" role="tab">Option B · Alles am Boden<span class="hint">26 Halte, mind. 15′ · Tagesende {ends(B)}</span></button>
 </div></div>
 <section>
-  <div class="sechead"><h2>The route</h2><div class="rule"></div><div class="tag" id="maptag"></div></div>
+  <div class="sechead"><h2>Die Route</h2><div class="rule"></div><div class="tag" id="maptag"></div></div>
   <div class="mapcard">
     <div class="mapbar">
-      <label><input type="checkbox" id="ck-osm"> map background</label>
-      <label><input type="checkbox" id="ck-cantons" checked> cantons by day</label>
-      <label><input type="checkbox" id="ck-live"> live trains on our lines</label>
-      <span class="days" id="livedays"><button data-d="1">Fri</button><button data-d="2">Sat</button><button data-d="3">Sun</button></span>
+      <label><input type="checkbox" id="ck-osm"> Hintergrundkarte</label>
+      <label><input type="checkbox" id="ck-cantons" checked> Kantone nach Tag</label>
+      <label><input type="checkbox" id="ck-live"> Züge live auf unseren Linien</label>
+      <span class="days" id="livedays"><button data-d="1">Fr</button><button data-d="2">Sa</button><button data-d="3">So</button></span>
       <span class="status" id="livestatus"></span>
     </div>
     <div id="map"></div>
@@ -118,31 +117,31 @@ html=f'''<!doctype html>
   </div>
 </section>
 <section>
-  <div class="sechead"><h2>Timetable &amp; beer stops</h2><div class="rule"></div><div class="tag">SBB timetable, 16–18.10.2026</div></div>
+  <div class="sechead"><h2>Fahrplan &amp; Bierhalte</h2><div class="rule"></div><div class="tag">SBB-Fahrplan 16.–18.10.2026</div></div>
   <div id="days"></div>
 </section>
 <section>
-  <div class="sechead"><h2>The walk links</h2><div class="rule"></div><div class="tag">part of the route</div></div>
+  <div class="sechead"><h2>Fusswege</h2><div class="rule"></div><div class="tag">Teil der Route</div></div>
   <div class="notes">
-    <div class="note"><b>Altstätten Stadt → Altstätten SG (Friday, 42′ window).</b> The Appenzeller Bahnen rack railway ends at Altstätten Stadt; the SBB Rheintal station is ~1.7 km further down — an easy downhill walk of ~20–25 min. This is what avoids passing through St. Gallen twice.</div>
-    <div class="note"><b>Ziegelbrücke (Friday, both options).</b> The station itself already stands on Glarus soil, but for an honest GL beer walk ~5 min over the Linth channel into Niederurnen (Glarus Nord) and back.</div>
+    <div class="note"><b>Altstätten Stadt → Altstätten SG (Fr, 42′ Zeit).</b> Die Zahnradbahn endet in Altstätten Stadt, der SBB-Bahnhof liegt 1.7 km weiter unten – 20–25′ bergab.</div>
+    <div class="note"><b>Ziegelbrücke (Fr, beide Optionen).</b> Der Bahnhof liegt schon im Glarnerland; für ein ehrliches GL-Bier 5′ über die Linth nach Niederurnen.</div>
   </div>
 </section>
 <section>
-  <div class="sechead"><h2>Good to know</h2><div class="rule"></div><div class="tag">verified 05.09.2026</div></div>
+  <div class="sechead"><h2>Gut zu wissen</h2><div class="rule"></div><div class="tag">geprüft 05.09.2026</div></div>
   <div class="notes">
-    <div class="note warn"><b>Everything runs hourly — the schedule is a chain.</b> Miss one train and you usually lose 60 minutes. Set phone timers. 15′ stops leave no margin for a late train — if one slips, fall back to the next hourly service and the rest of the chain shifts by an hour.</div>
-    <div class="note warn"><b>Day lengths:</b> Option A — Fri 07:05–{dayA[0]}, Sat 07:18–{dayA[1]}, Sun {A['days'][2]['legs'][0]['dep']}–{dayA[2]}. Option B — Fri 07:05–{dayB[0]}, Sat 07:18–{dayB[1]}, Sun {B['days'][2]['legs'][0]['dep']}–{dayB[2]}. Both sleep Luzern, then Neuchâtel.</div>
-    <div class="note"><b>The map</b> shows only the lines we ride: the full extent of each line in grey, our sections in the day colour. <b>Live trains:</b> the map can show every train currently running on those lines for the selected day — positions are computed from the SBB timetable plus the reported delays (transport.opendata.ch station boards, refreshed every 5 minutes), not from GPS, so expect them to be a minute or two off. Trains with the number of one we take are ringed in yellow. Untick it when you don't need it.</div>
-    <div class="note"><b>The RE 48 briefly crosses Germany</b> (Jestetten corridor before Schaffhausen). Swiss tickets valid, normally no checks — carry an ID.</div>
-    <div class="note"><b>The CJ leg is a train, not a bus:</b> the narrow-gauge red Chemins de fer du Jura from Glovelier through the Franches-Montagnes to La Chaux-de-Fonds. Option A rides it 16:41→17:56 at dusk and drinks the JU beer on it — 75′ through the Jura, the best ride of the trip. Option B skips it: IC from Delémont to Biel (BE beer) and on to Neuchâtel for the night.</div>
-    <div class="note"><b>Drinking your own beer on board is allowed</b> on all trains in this plan (SBB, Thurbo, SOB, Appenzeller Bahnen, Zentralbahn, CJ) and on platforms — that is what Option A is built on. Stock up at Zürich HB and top up in Schaffhausen, Landquart, Olten and Basel. Every on-board beer has at least 20′ inside its canton; the shortest is <b>AR</b> (≈22′, Lustmühle → Gais), the longest <b>JU</b> on the CJ (≈96′) and <b>TG</b> on the S 1 (≈88′). AG is taken on the S 26 through the Freiamt (≈44′) — the price is one hour on Saturday (Olten 13:21, next IC with a proper stop 14:04). BE is the last one, through Bern on the way home.</div>
-    <div class="note good"><b>Tickets:</b> three Saver Day Passes (buy early) or a GA — one pass covers everything here, including Appenzeller Bahnen, Zentralbahn and CJ.</div>
-    <div class="note"><b>OLMA fair runs in St. Gallen 8–18 Oct</b> — expect very full trains around St. Gallen on Friday. <b>Re-check the timetable a few days before</b> (sbb.ch) — the SBB buttons on each leg open the live connection.</div>
+    <div class="note warn"><b>Alles fährt stündlich.</b> Ein verpasster Zug kostet meist 60′ – Timer stellen.</div>
+    <div class="note warn"><b>Tage:</b> A – Fr 07:05–{dayA[0]}, Sa 07:18–{dayA[1]}, So {A['days'][2]['legs'][0]['dep']}–{dayA[2]}. B – Fr 07:05–{dayB[0]}, Sa 07:18–{dayB[1]}, So {B['days'][2]['legs'][0]['dep']}–{dayB[2]}.</div>
+    <div class="note"><b>Karte:</b> nur unsere Linien – ganze Länge grau, unsere Abschnitte farbig. <b>Züge live</b> zeigt alle Züge auf diesen Linien; Position aus Fahrplan und gemeldeter Verspätung (transport.opendata.ch, alle 5 Min), kein GPS – 1–2 Minuten Abweichung. ★ = Zugnummern, die wir nehmen.</div>
+    <div class="note"><b>RE 48</b> fährt kurz durch Deutschland – Ausweis mitnehmen.</div>
+    <div class="note"><b>CJ (Option A):</b> Schmalspurbahn Glovelier → La Chaux-de-Fonds, 16:41→17:56, JU-Bier an Bord. Option B: IC Delémont → Biel → Neuenburg.</div>
+    <div class="note"><b>Eigenes Bier im Zug</b> ist auf allen Bahnen erlaubt. Nachschub in Zürich, Schaffhausen, Landquart, Olten, Basel. Kürzestes Bier im Zug: AR (≈22′); längste: JU (≈96′), TG (≈88′). AG auf der S 26 durchs Freiamt (≈44′) kostet am Samstag eine Stunde.</div>
+    <div class="note good"><b>Tickets:</b> 3× Spartageskarte oder GA – gilt auch für Appenzeller Bahnen, Zentralbahn und CJ.</div>
+    <div class="note"><b>OLMA</b> in St. Gallen 8.–18.10.: volle Züge am Freitag. Fahrplan kurz vor der Reise nochmals prüfen.</div>
   </div>
 </section>
 <footer class="attr">
-  Timetable: official Swiss public-transport data (transport.opendata.ch / SBB), queried 05.09.2026 for 16–18.10.2026 — annual timetable 2026; re-verify shortly before travel via the SBB links. Map: lakes and optional background © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; track geometry: SBB open data (data.sbb.ch, "Linie mit Polygon"); canton outlines: swisstopo. 26 cantons, 26 beers — drink responsibly. Prost, Santé, Salute, Viva!
+  Fahrplan: transport.opendata.ch / SBB, abgefragt 05.09.2026 für 16.–18.10.2026 – vor der Reise via SBB-Links prüfen. Karte: Seen und Hintergrund © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende; Gleisgeometrie: SBB Open Data (data.sbb.ch); Kantonsgrenzen: swisstopo. 26 Kantone, 26 Biere. Prost, Santé, Salute, Viva!
 </footer>
 </div>
 <script src="leaflet.js"></script>
@@ -153,17 +152,17 @@ const DATA = window.KT;
 const MUG = '<svg class="mug" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3h11a1 1 0 0 1 1 1v2h2.5A2.5 2.5 0 0 1 22 8.5v5a2.5 2.5 0 0 1-2.5 2.5H17v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm12 5v6h2.5a.5.5 0 0 0 .5-.5v-5a.5.5 0 0 0-.5-.5H17ZM7 7v9h2V7H7Zm4 0v9h2V7h-2Z"/></svg>';
 const DAYC = {{1:'#2a78d6',2:'#eb6834',3:'#1baf7a'}};
 const DAYCS = {{1:'var(--d1s)',2:'var(--d2s)',3:'var(--d3s)'}};
-const DAYLBL = {{1:'Day 1 · Fri 16.10', 2:'Day 2 · Sat 17.10', 3:'Day 3 · Sun 18.10'}};
+const DAYLBL = {{1:'Tag 1 · Fr 16.10.', 2:'Tag 2 · Sa 17.10.', 3:'Tag 3 · So 18.10.'}};
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 function stopsList(variant){{
   const days = DATA[variant].days, stops = [], walks = [];
-  stops.push({{n:1, canton:'ZH', station:'Zürich HB', ll:days[0].legs[0].from_ll, day:1, when:'meet 06:45 · beer #1 before the 07:05 departure'}});
+  stops.push({{n:1, canton:'ZH', station:'Zürich HB', ll:days[0].legs[0].from_ll, day:1, when:'Treffpunkt 06:45 · Bier Nr. 1 vor der Abfahrt 07:05'}});
   let n = 1;
   days.forEach(d => d.legs.forEach(l => {{
-    if(l.canton){{ n += 1; stops.push({{n, canton:l.canton, station:l.to, ll:l.to_ll, day:d.day, when:'arr '+l.arr+(l.stop_min!=null? ' · '+l.stop_min+'′ stop':' · arrival beer')}}); }}
-    else if((l.note||'').indexOf('walk') >= 0) walks.push({{station:l.to, ll:l.to_ll, day:d.day, note:l.note}});
+    if(l.canton){{ n += 1; stops.push({{n, canton:l.canton, station:l.to, ll:l.to_ll, day:d.day, when:'an '+l.arr+(l.stop_min!=null? ' · '+l.stop_min+'′ Halt':' · Ankunftsbier')}}); }}
+    else if(l.walk) walks.push({{station:l.to, ll:l.to_ll, day:d.day, note:l.note}});
   }}));
   return {{stops, walks}};
 }}
@@ -198,32 +197,32 @@ function renderMap(variant){{
       L.polyline(path, {{color:'#fff', weight:8, opacity:.9, interactive:false}}).addTo(routeLayer);
       const pl = L.polyline(path, {{color:DAYC[d.day], weight:4, opacity:1}}).addTo(routeLayer);
       const tr = l.trains.map(t=>t.train).join(' + ');
-      pl.bindTooltip('<b>'+esc(tr)+'</b> '+esc(l.from)+' → '+esc(l.to)+'<br>'+l.dep+' → '+l.arr+' · Day '+d.day, {{sticky:true}});
+      pl.bindTooltip('<b>'+esc(tr)+'</b> '+esc(l.from)+' → '+esc(l.to)+'<br>'+l.dep+' → '+l.arr+' · Tag '+d.day, {{sticky:true}});
       bounds = bounds ? bounds.extend(pl.getBounds()) : pl.getBounds();
     }});
     OB.filter(o => o.day===d.day && o.leg===li).forEach(o => {{
       const full = l.geo.flat(); if(full.length<2) return;
       const pt = pointAt(full, 0.5);
-      L.marker(pt, {{icon: L.divIcon({{className:'', html:'<div class="obmk">'+MUG+' '+o.c+' on board</div>', iconSize:[0,0], iconAnchor:[0,0]}}), zIndexOffset:500}})
-        .bindTooltip('<b>'+o.c+' — beer on board</b><br>≈'+o.mins+'′ inside · '+esc(o.note)).addTo(stopLayer);
+      L.marker(pt, {{icon: L.divIcon({{className:'', html:'<div class="obmk">'+MUG+' '+o.c+' im Zug</div>', iconSize:[0,0], iconAnchor:[0,0]}}), zIndexOffset:500}})
+        .bindTooltip('<b>'+o.c+' – Bier im Zug</b><br>≈'+o.mins+'′ im Kanton · '+esc(o.note)).addTo(stopLayer);
     }});
   }}));
   // walk links
   days.forEach(d => d.legs.forEach((l, li) => {{
-    if((l.note||'').indexOf('walk')>=0 && d.legs[li+1]) L.polyline([l.to_ll, d.legs[li+1].from_ll], {{color:'#333', weight:3, dashArray:'6 5'}}).bindTooltip('Walk link · '+esc(l.note)).addTo(routeLayer);
+    if(l.walk && d.legs[li+1]) L.polyline([l.to_ll, d.legs[li+1].from_ll], {{color:'#333', weight:3, dashArray:'6 5'}}).bindTooltip('Fussweg · '+esc(l.note)).addTo(routeLayer);
   }}));
   stops.forEach(st => {{
     L.marker(st.ll, {{icon: L.divIcon({{className:'', html:'<div class="stopmk" style="border-color:'+DAYC[st.day]+'">'+st.n+'</div>', iconSize:[22,22], iconAnchor:[11,11]}}), zIndexOffset:800}})
       .bindTooltip('<b>'+st.n+' · '+esc(st.station)+' ('+st.canton+')</b><br>'+esc(st.when)).addTo(stopLayer);
   }});
   if(bounds && !renderMap.fitted){{ map.fitBounds(bounds.pad(0.04)); renderMap.fitted = true; }}
-  $('maptag').textContent = 'option '+variant.toUpperCase()+' · '+stops.length+' stops'+(OB.length? ' · '+OB.length+' beers on board' : ' · 15′ minimum');
+  $('maptag').textContent = 'Option '+variant.toUpperCase()+' · '+stops.length+' Halte'+(OB.length? ' · '+OB.length+' Biere im Zug' : ' · mind. 15′');
   let lg = '';
   for(const d of [1,2,3]) lg += '<span class="lg"><span class="sw" style="background:'+DAYC[d]+'"></span>'+DAYLBL[d]+'</span>';
-  lg += '<span class="lg"><span class="pin"></span>beer stop</span><span class="lg"><span class="wk"></span>walk link</span>';
-  if(OB.length) lg += '<span class="lg" style="color:var(--beer-line)">'+MUG+'beer on board</span>';
-  lg += '<span class="lg"><span class="sw" style="background:#8a8a86;height:2px"></span>full extent of our lines</span>';
-  lg += '<span class="lg"><span class="trmk IC" style="position:static;transform:none">IC</span><span class="trmk S" style="position:static;transform:none">S</span> live train</span>';
+  lg += '<span class="lg"><span class="pin"></span>Bierhalt</span><span class="lg"><span class="wk"></span>Fussweg</span>';
+  if(OB.length) lg += '<span class="lg" style="color:var(--beer-line)">'+MUG+'Bier im Zug</span>';
+  lg += '<span class="lg"><span class="sw" style="background:#8a8a86;height:2px"></span>unsere Linien, ganze Länge</span>';
+  lg += '<span class="lg"><span class="trmk IC" style="position:static;transform:none">IC</span><span class="trmk S" style="position:static;transform:none">S</span> Zug live</span>';
   $('maplegend').innerHTML = lg;
   $('stopindex').innerHTML = stops.map(st => '<span class="si"><span class="n" style="color:'+DAYC[st.day]+'">'+st.n+'</span><span>'+esc(st.station)+' · <b>'+st.canton+'</b></span></span>').join('');
 }}
@@ -240,7 +239,7 @@ function liveConfig(variant){{
 function fmtLocal(d){{ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }}
 async function fetchLive(){{
   const cfg = liveConfig(VARIANT); const since = new Date(Date.now()-150*60000);
-  $('livestatus').textContent = 'loading '+cfg.stations.length+' station boards…';
+  $('livestatus').textContent = 'lade '+cfg.stations.length+' Abfahrtstafeln…';
   const found = {{}};
   await Promise.all(cfg.stations.map(async id => {{
     try{{
@@ -300,7 +299,7 @@ function drawLive(){{
     const pos = positionAt(j, now); if(!pos) continue; seen.add(jid); count++; if(j.ours) ours++;
     const dl = pos.next && pos.next.delay ? ' +'+pos.next.delay+'′' : '';
     const label = j.key + (j.ours? ' ★':'');
-    const tip = '<b>'+esc(j.key)+' → '+esc(j.to)+'</b>'+(j.ours? ' · our train':'')+'<br>'+(pos.dwell? 'at ':'next: ')+esc(pos.next? pos.next.name : '')+(pos.next&&pos.next.arr? ' '+new Date(pos.next.arr).toTimeString().slice(0,5):'')+dl+'<br><span style="opacity:.7">train '+esc(j.name.replace(/^0+/,''))+'</span>';
+    const tip = '<b>'+esc(j.key)+' → '+esc(j.to)+'</b>'+(j.ours? ' · unser Zug':'')+'<br>'+(pos.dwell? 'in ':'nächster Halt: ')+esc(pos.next? pos.next.name : '')+(pos.next&&pos.next.arr? ' '+new Date(pos.next.arr).toTimeString().slice(0,5):'')+dl+'<br><span style="opacity:.7">Zug '+esc(j.name.replace(/^0+/,''))+'</span>';
     if(liveMarkers[jid]){{ liveMarkers[jid].setLatLng(pos.ll); liveMarkers[jid].setTooltipContent(tip); }}
     else {{
       liveMarkers[jid] = L.marker(pos.ll, {{icon: L.divIcon({{className:'', html:'<div class="trmk '+esc(j.cat)+(j.ours?' ours':'')+'">'+esc(label)+'</div>', iconSize:[0,0], iconAnchor:[0,0]}}), zIndexOffset:(j.ours?1200:1000)}}).bindTooltip(tip).addTo(liveLayer);
@@ -308,7 +307,7 @@ function drawLive(){{
   }}
   for(const jid of Object.keys(liveMarkers)) if(!seen.has(jid)){{ liveLayer.removeLayer(liveMarkers[jid]); delete liveMarkers[jid]; }}
   const age = Math.round((now-LIVE.lastFetch)/60000);
-  $('livestatus').textContent = count+' trains on '+['','Friday','Saturday','Sunday'][LIVE.day]+"'s lines now"+(ours? ' · '+ours+' ★ ours':'')+' · timetable + delays, updated '+(age<1?'just now':age+' min ago');
+  $('livestatus').textContent = count+' Züge jetzt auf den Linien vom '+['','Freitag','Samstag','Sonntag'][LIVE.day]+(ours? ' · '+ours+' ★ unsere':'')+' · Fahrplan + Verspätungen, Stand '+(age<1?'jetzt':'vor '+age+' Min');
 }}
 function clearLive(){{ for(const k of Object.keys(liveMarkers)){{ liveLayer.removeLayer(liveMarkers[k]); delete liveMarkers[k]; }} LIVE.journeys={{}}; $('livestatus').textContent=''; }}
 function setLive(on){{
@@ -329,23 +328,23 @@ function renderDays(variant){{
   days.forEach(d => {{
     const dc = DAYC[d.day], dcs = DAYCS[d.day]; let rows = '';
     if(d.day===1){{
-      rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">06:45<div class="pl">meet up</div></td><td colspan="2"><span class="cchip"><span class="cb" style="background:'+dc+'">ZH</span> Zürich HB — beer #1 before departure</span><div class="stopmeta">20′ until the 07:05 train</div></td></tr>';
+      rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">06:45<div class="pl">Treffpunkt</div></td><td colspan="2"><span class="cchip"><span class="cb" style="background:'+dc+'">ZH</span> Zürich HB – Bier Nr. 1 vor der Abfahrt</span><div class="stopmeta">20′ bis zum Zug um 07:05</div></td></tr>';
       bpd[1]++;
     }}
     d.legs.forEach((l, li) => {{
       l.trains.forEach((t, ti) => {{
         if(ti>0){{ const prev = l.trains[ti-1]; const wait = (parseInt(t.dep_time)*60+ +t.dep_time.slice(3)) - (parseInt(prev.arr_time)*60+ +prev.arr_time.slice(3));
-          rows += '<tr><td class="t"></td><td colspan="2" class="xfer">↳ change in '+esc(t.dep_station)+' ('+wait+'′)</td></tr>'; }}
-        rows += '<tr><td class="t">'+t.dep_time+' → '+t.arr_time+'<div class="pl">Gl. '+esc(t.dep_platform||'–')+' → '+esc(t.arr_platform||'–')+'</div></td><td colspan="2"><span class="trainchip">'+esc(t.train)+'</span>'+esc(t.dep_station)+' → '+esc(t.arr_station)+' <span class="dir">(direction '+esc(t.dir||'')+')</span>'+(ti===0 && l.sbb ? '<a class="sbblink" href="'+esc(l.sbb)+'" target="_blank" rel="noopener">SBB ↗</a>' : '')+'</td></tr>';
+          rows += '<tr><td class="t"></td><td colspan="2" class="xfer">↳ Umsteigen in '+esc(t.dep_station)+' ('+wait+'′)</td></tr>'; }}
+        rows += '<tr><td class="t">'+t.dep_time+' → '+t.arr_time+'<div class="pl">Gl. '+esc(t.dep_platform||'–')+' → '+esc(t.arr_platform||'–')+'</div></td><td colspan="2"><span class="trainchip">'+esc(t.train)+'</span>'+esc(t.dep_station)+' → '+esc(t.arr_station)+' <span class="dir">(Richtung '+esc(t.dir||'')+')</span>'+(ti===0 && l.sbb ? '<a class="sbblink" href="'+esc(l.sbb)+'" target="_blank" rel="noopener">SBB ↗</a>' : '')+'</td></tr>';
       }});
-      OB.filter(o => o.day===d.day && o.leg===li).forEach(o => {{ rows += '<tr class="onboard"><td class="t">≈'+o.mins+'′ inside</td><td colspan="2">'+MUG+'<b>'+o.c+' beer on board</b> — '+esc(DATA.canton_names[o.c])+' · '+esc(o.note)+'</td></tr>'; bpd[d.day]++; }});
+      OB.filter(o => o.day===d.day && o.leg===li).forEach(o => {{ rows += '<tr class="onboard"><td class="t">≈'+o.mins+'′ im Kanton</td><td colspan="2">'+MUG+'<b>'+o.c+' Bier im Zug</b> – '+esc(DATA.canton_names[o.c])+' · '+esc(o.note)+'</td></tr>'; bpd[d.day]++; }});
       if(l.canton){{ bpd[d.day]++;
-        rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'<div class="pl">'+(l.stop_min!=null? 'stop':'arrival beer')+'</div></td><td colspan="2"><span class="cchip"><span class="cb" style="background:'+dc+'">'+l.canton+'</span> '+esc(l.to)+'</span>'+(l.note? '<div class="stopmeta">'+esc(l.note)+'</div>':'')+'</td></tr>';
+        rows += '<tr class="stop beerstop" style="--dc:'+dc+';--dcs:'+dcs+'"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'<div class="pl">'+(l.stop_min!=null? 'Halt':'Ankunftsbier')+'</div></td><td colspan="2"><span class="cchip"><span class="cb" style="background:'+dc+'">'+l.canton+'</span> '+esc(l.to)+'</span>'+(l.note? '<div class="stopmeta">'+esc(l.note)+'</div>':'')+'</td></tr>';
       }} else {{
-        rows += '<tr class="stop"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'</td><td colspan="2"><span class="dir">'+esc(l.to)+' — '+esc(l.note||'transfer')+'</span></td></tr>';
+        rows += '<tr class="stop"><td class="t">'+l.arr+(l.stop_min!=null? ' +'+l.stop_min+'′':'')+'</td><td colspan="2"><span class="dir">'+esc(l.to)+' – '+esc(l.note||'Umsteigen')+'</span></td></tr>';
       }}
     }});
-    out += '<div class="day"><div class="dayhead" style="--dc:'+dc+'"><span class="dnum"><span>Day '+d.day+'</span> · '+['','Friday 16.10.','Saturday 17.10.','Sunday 18.10.'][d.day]+'</span><span class="droute">'+esc(d.legs[0].from)+' → '+esc(d.legs[d.legs.length-1].to)+'</span><span class="dmeta">'+d.legs[0].dep+' – '+d.legs[d.legs.length-1].arr+' · '+bpd[d.day]+' beers</span></div><div class="tscroll"><table>'+rows+'</table></div></div>';
+    out += '<div class="day"><div class="dayhead" style="--dc:'+dc+'"><span class="dnum"><span>Tag '+d.day+'</span> · '+['','Freitag 16.10.','Samstag 17.10.','Sonntag 18.10.'][d.day]+'</span><span class="droute">'+esc(d.legs[0].from)+' → '+esc(d.legs[d.legs.length-1].to)+'</span><span class="dmeta">'+d.legs[0].dep+' – '+d.legs[d.legs.length-1].arr+' · '+bpd[d.day]+' Biere</span></div><div class="tscroll"><table>'+rows+'</table></div></div>';
   }});
   $('days').innerHTML = out; return bpd;
 }}
@@ -355,12 +354,12 @@ function renderStats(variant, bpd){{
   const ntr = days.reduce((a,d)=>a+d.legs.reduce((x,l)=>x+l.trains.length,0),0);
   const home = days[2].legs[days[2].legs.length-1].arr;
   const shortest = Math.min(...days.flatMap(d=>d.legs.filter(l=>l.canton && l.stop_min!=null).map(l=>l.stop_min)));
-  $('stats').innerHTML = '<div class="tile"><div class="v">26 <small>of 26</small></div><div class="k">cantons — complete</div></div>'+
-    '<div class="tile"><div class="v">'+(bpd[1]+bpd[2]+bpd[3])+'</div><div class="k">beers · '+bpd[1]+' + '+bpd[2]+' + '+bpd[3]+' per day</div></div>'+
-    '<div class="tile"><div class="v">'+Math.floor(ride/60)+' h '+String(ride%60).padStart(2,'0')+'</div><div class="k">on trains</div></div>'+
-    '<div class="tile"><div class="v">'+ntr+'</div><div class="k">trains</div></div>'+
-    '<div class="tile"><div class="v">'+shortest+'′</div><div class="k">shortest stop</div></div>'+
-    '<div class="tile"><div class="v">'+home+'</div><div class="k">home in Zürich, Sunday</div></div>';
+  $('stats').innerHTML = '<div class="tile"><div class="v">26 <small>von 26</small></div><div class="k">Kantone – komplett</div></div>'+
+    '<div class="tile"><div class="v">'+(bpd[1]+bpd[2]+bpd[3])+'</div><div class="k">Biere · '+bpd[1]+' + '+bpd[2]+' + '+bpd[3]+' pro Tag</div></div>'+
+    '<div class="tile"><div class="v">'+Math.floor(ride/60)+' h '+String(ride%60).padStart(2,'0')+'</div><div class="k">im Zug</div></div>'+
+    '<div class="tile"><div class="v">'+ntr+'</div><div class="k">Züge</div></div>'+
+    '<div class="tile"><div class="v">'+shortest+'′</div><div class="k">kürzester Halt</div></div>'+
+    '<div class="tile"><div class="v">'+home+'</div><div class="k">zuhause in Zürich, Sonntag</div></div>';
 }}
 let VARIANT = 'a';
 try{{ VARIANT = localStorage.getItem('ktour-variant4') || 'a'; }}catch(e){{}}
