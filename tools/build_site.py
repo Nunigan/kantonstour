@@ -32,11 +32,27 @@ def home(P): return P['days'][2]['legs'][-1]['arr']
 nA=1+sum(1 for d in A['days'] for l in d['legs'] if l['canton']); nOB=len(A['onboard'])
 nB=1+sum(1 for d in B['days'] for l in d['legs'] if l['canton'])
 assert nA+nOB==26 and nB==26,(nA,nOB,nB)
-DATA={'a':A,'b':B,'beer_day':{'a':beer_day(A),'b':beer_day(B)},'canton_names':v4['canton_names'],'cantons':cantons}
+lakes=[]
+for sub in v4['map']['lakes'].split('M'):
+    sub=sub.strip().rstrip('Z').strip()
+    if not sub: continue
+    pts=[svg_to_ll(*map(float,t.split(','))) for t in sub.split()]
+    if len(pts)>=4: lakes.append(pts)
+DATA={'a':A,'b':B,'beer_day':{'a':beer_day(A),'b':beer_day(B)},'canton_names':v4['canton_names'],'cantons':cantons,'lakes':lakes}
+# whole rail network, simplified
+from track import simplify
+net=[]
+for f in json.load(open(S+'/sbb/linie-mit-polygon.geojson'))['features']:
+    c=f['geometry']['coordinates']
+    if len(c)<2: continue
+    net.append([[round(y,4),round(x,4)] for x,y in simplify(c,45)])
+open(SITE+'/network.js','w').write('window.KT_NET='+json.dumps(net,separators=(',',':'))+';\n')
+print('network features',len(net),'bytes',os.path.getsize(SITE+'/network.js'))
 open(SITE+'/data.js','w').write('window.KT='+json.dumps(DATA,ensure_ascii=False,separators=(',',':'))+';\n')
 # ---------- page ----------
 css=open(S+'/template_pre.html').read()
 css=css[css.rindex('<style>')+7:css.rindex('</style>')]
+css=css.replace('#map svg{display:block;width:100%;height:auto;cursor:grab;touch-action:none}','').replace('#map svg.dragging{cursor:grabbing}','').replace('#map{position:relative}','')
 leaflet_css=open(S+'/leaflet.css').read()
 dayA=[d['legs'][-1]['arr'] for d in A['days']]; dayB=[d['legs'][-1]['arr'] for d in B['days']]
 html=f'''<!doctype html>
@@ -45,7 +61,7 @@ html=f'''<!doctype html>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap">
 <style>{leaflet_css}</style>
 <style>{css}
-#map{{height:640px;border-radius:10px;overflow:hidden;background:#dfe9f2}}
+#map{{height:640px;border-radius:10px;overflow:hidden;background:var(--surface2)}}
 @media (max-width:700px){{#map{{height:480px}}}}
 .mapbar{{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:0 4px 10px;font-size:13px;color:var(--ink2)}}
 .mapbar label{{display:inline-flex;align-items:center;gap:6px;font-weight:600;cursor:pointer}}
@@ -82,7 +98,8 @@ html=f'''<!doctype html>
   <div class="sechead"><h2>The route</h2><div class="rule"></div><div class="tag" id="maptag"></div></div>
   <div class="mapcard">
     <div class="mapbar">
-      <label><input type="checkbox" id="ck-rail" checked> railway tracks (OpenRailwayMap)</label>
+      <label><input type="checkbox" id="ck-osm"> map background</label>
+      <label><input type="checkbox" id="ck-rail"> OpenRailwayMap overlay</label>
       <label><input type="checkbox" id="ck-cantons" checked> cantons by day</label>
       <label><input type="checkbox" id="ck-live"> live trains on our lines</label>
       <span class="days" id="livedays"><button data-d="1">Fri</button><button data-d="2">Sat</button><button data-d="3">Sun</button></span>
@@ -123,6 +140,7 @@ html=f'''<!doctype html>
 </div>
 <script src="leaflet.js"></script>
 <script src="data.js"></script>
+<script src="network.js"></script>
 <script>
 const DATA = window.KT;
 const MUG = '<svg class="mug" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3h11a1 1 0 0 1 1 1v2h2.5A2.5 2.5 0 0 1 22 8.5v5a2.5 2.5 0 0 1-2.5 2.5H17v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm12 5v6h2.5a.5.5 0 0 0 .5-.5v-5a.5.5 0 0 0-.5-.5H17ZM7 7v9h2V7H7Zm4 0v9h2V7h-2Z"/></svg>';
@@ -144,11 +162,16 @@ function stopsList(variant){{
 }}
 // ---------- map ----------
 const map = L.map('map', {{zoomSnap:0.5, worldCopyJump:false}}).setView([46.85, 8.25], 8);
-L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom:19, attribution:'© OpenStreetMap'}}).addTo(map);
+const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom:19, attribution:'© OpenStreetMap'}});
+$('ck-osm').addEventListener('change', e => e.target.checked ? osmLayer.addTo(map).bringToBack() : map.removeLayer(osmLayer));
 const railLayer = L.tileLayer('https://{{s}}.tiles.openrailwaymap.org/standard/{{z}}/{{x}}/{{y}}.png', {{maxZoom:19, subdomains:'abc', opacity:.75, attribution:'© OpenRailwayMap'}});
-const cantonLayer = L.layerGroup().addTo(map), routeLayer = L.layerGroup().addTo(map), stopLayer = L.layerGroup().addTo(map), liveLayer = L.layerGroup().addTo(map);
+const cantonLayer = L.layerGroup().addTo(map), netLayer = L.layerGroup().addTo(map), routeLayer = L.layerGroup().addTo(map), stopLayer = L.layerGroup().addTo(map), liveLayer = L.layerGroup().addTo(map);
 $('ck-rail').addEventListener('change', e => e.target.checked ? railLayer.addTo(map) : map.removeLayer(railLayer));
 if($('ck-rail').checked) railLayer.addTo(map);
+// whole Swiss rail network (SBB open data), thin grey
+(window.KT_NET||[]).forEach(line => L.polyline(line, {{color:'#8a8a86', weight:1.1, opacity:.75, interactive:false}}).addTo(netLayer));
+const lakeLayer = L.layerGroup().addTo(map);
+(DATA.lakes||[]).forEach(p => L.polygon(p, {{color:'#5b8fd0', weight:.6, opacity:.5, fillColor:'#5b8fd0', fillOpacity:.22, interactive:false}}).addTo(lakeLayer));
 $('ck-cantons').addEventListener('change', e => e.target.checked ? cantonLayer.addTo(map) : map.removeLayer(cantonLayer));
 function pathLen(p){{ let s=0; for(let i=1;i<p.length;i++) s+=map.distance(p[i-1],p[i]); return s; }}
 function pointAt(p, f){{
@@ -161,15 +184,15 @@ function renderMap(variant){{
   cantonLayer.clearLayers(); routeLayer.clearLayers(); stopLayer.clearLayers();
   for(const [ab, polys] of Object.entries(DATA.cantons)){{
     const day = bd[ab];
-    L.polygon(polys, {{color:'#555', weight:.8, opacity:.5, fillColor: day? DAYC[day] : '#999', fillOpacity: day? .13 : .04, interactive:false}}).addTo(cantonLayer);
+    L.polygon(polys, {{color:'#8a8a86', weight:.9, opacity:.55, fillColor: day? DAYC[day] : '#999', fillOpacity: day? .10 : .03, interactive:false}}).addTo(cantonLayer);
   }}
   const {{stops, walks}} = stopsList(variant);
   let bounds = null;
   days.forEach(d => d.legs.forEach((l, li) => {{
     l.geo.forEach(path => {{
       if(path.length < 2) return;
-      L.polyline(path, {{color:'#fff', weight:7, opacity:.85, interactive:false}}).addTo(routeLayer);
-      const pl = L.polyline(path, {{color:DAYC[d.day], weight:3.5, opacity:1}}).addTo(routeLayer);
+      L.polyline(path, {{color:'#fff', weight:8, opacity:.9, interactive:false}}).addTo(routeLayer);
+      const pl = L.polyline(path, {{color:DAYC[d.day], weight:4, opacity:1}}).addTo(routeLayer);
       const tr = l.trains.map(t=>t.train).join(' + ');
       pl.bindTooltip('<b>'+esc(tr)+'</b> '+esc(l.from)+' → '+esc(l.to)+'<br>'+l.dep+' → '+l.arr+' · Day '+d.day, {{sticky:true}});
       bounds = bounds ? bounds.extend(pl.getBounds()) : pl.getBounds();
@@ -195,6 +218,7 @@ function renderMap(variant){{
   for(const d of [1,2,3]) lg += '<span class="lg"><span class="sw" style="background:'+DAYC[d]+'"></span>'+DAYLBL[d]+'</span>';
   lg += '<span class="lg"><span class="pin"></span>beer stop</span><span class="lg"><span class="wk"></span>walk link</span>';
   if(OB.length) lg += '<span class="lg" style="color:var(--beer-line)">'+MUG+'beer on board</span>';
+  lg += '<span class="lg"><span class="sw" style="background:#8a8a86;height:2px"></span>other rail lines</span>';
   lg += '<span class="lg"><span class="trmk IC" style="position:static;transform:none">IC</span><span class="trmk S" style="position:static;transform:none">S</span> live train</span>';
   $('maplegend').innerHTML = lg;
   $('stopindex').innerHTML = stops.map(st => '<span class="si"><span class="n" style="color:'+DAYC[st.day]+'">'+st.n+'</span><span>'+esc(st.station)+' · <b>'+st.canton+'</b></span></span>').join('');
