@@ -33,12 +33,12 @@ def parse(c):
             pl.append({'name':st['name'],'id':st.get('id'),'lat':co['x'],'lon':co['y'],'arr':a,'dep':d,'xy':to_svg(co['x'],co['y'])})
         # trim passList to this section's dep/arr stations
         dn=s['departure']['station']['name']; an=s['arrival']['station']['name']
-        names=[p['name'] for p in pl]
+        names=[p['name'] for p in pl]; pl_full=pl
         try: i0=names.index(dn); i1=names.index(an); pl=pl[i0:i1+1]
         except ValueError: pass
         secs.append({'train':(cat+' '+(j['number'] or '')).strip(),'cat':cat,'number':j['number'],'name':j['name'],'dir':j['to'],
             'dep_station':dn,'dep_time':hm(ts(s['departure']['departure'])),'dep_ts':ts(s['departure']['departure']),'dep_platform':s['departure']['platform'] or '',
-            'arr_station':an,'arr_time':hm(ts(s['arrival']['arrival'])),'arr_ts':ts(s['arrival']['arrival']),'arr_platform':s['arrival']['platform'] or '','pass':pl})
+            'arr_station':an,'arr_time':hm(ts(s['arrival']['arrival'])),'arr_ts':ts(s['arrival']['arrival']),'arr_platform':s['arrival']['platform'] or '','pass':pl,'pass_full':pl_full})
     dep=ts(c['from']['departure']); arr=ts(c['to']['arrival'])
     return {'from':c['from']['station']['name'],'to':c['to']['station']['name'],'from_id':c['from']['station']['id'],'to_id':c['to']['station']['id'],
             'dep':dep,'arr':arr,'duration_min':int((arr-dep).total_seconds()//60),'transfers':len(secs)-1,'trains':secs,

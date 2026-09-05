@@ -32,21 +32,29 @@ def home(P): return P['days'][2]['legs'][-1]['arr']
 nA=1+sum(1 for d in A['days'] for l in d['legs'] if l['canton']); nOB=len(A['onboard'])
 nB=1+sum(1 for d in B['days'] for l in d['legs'] if l['canton'])
 assert nA+nOB==26 and nB==26,(nA,nOB,nB)
+def pip(pt,poly):
+    x,y=pt[1],pt[0]; inside=False; n=len(poly)
+    for i in range(n):
+        y1,x1=poly[i]; y2,x2=poly[(i+1)%n]
+        if (y1>y)!=(y2>y):
+            xi=x1+(y-y1)*(x2-x1)/(y2-y1)
+            if xi>x: inside=not inside
+    return inside
+allpolys=[p for ps in cantons.values() for p in ps]
 lakes=[]
-for sub in v4['map']['lakes'].split('M'):
-    sub=sub.strip().rstrip('Z').strip()
-    if not sub: continue
-    pts=[svg_to_ll(*map(float,t.split(','))) for t in sub.split()]
-    if len(pts)>=4: lakes.append(pts)
+for ring in json.load(open(S+'/sbb/lakes.json')):
+    if any(any(pip(pt,poly) for poly in allpolys) for pt in ring[::max(1,len(ring)//40)]): lakes.append(ring)
+print('lakes kept',len(lakes))
+# background network = full extent of the lines we ride (both variants)
+net={}
+for P in (A,B):
+    for k,L in P['lines'].items():
+        for sk,p in L['seg'].items():
+            a_,b_=sk.split('|'); sig=tuple(sorted((a_,b_)))
+            if sig not in net: net[sig]=[[round(y,4),round(x,4)] for y,x in p]
+        L.pop('paths',None)
+open(SITE+'/network.js','w').write('window.KT_NET='+json.dumps(list(net.values()),separators=(',',':'))+';\n')
 DATA={'a':A,'b':B,'beer_day':{'a':beer_day(A),'b':beer_day(B)},'canton_names':v4['canton_names'],'cantons':cantons,'lakes':lakes}
-# whole rail network, simplified
-from track import simplify
-net=[]
-for f in json.load(open(S+'/sbb/linie-mit-polygon.geojson'))['features']:
-    c=f['geometry']['coordinates']
-    if len(c)<2: continue
-    net.append([[round(y,4),round(x,4)] for x,y in simplify(c,45)])
-open(SITE+'/network.js','w').write('window.KT_NET='+json.dumps(net,separators=(',',':'))+';\n')
 print('network features',len(net),'bytes',os.path.getsize(SITE+'/network.js'))
 open(SITE+'/data.js','w').write('window.KT='+json.dumps(DATA,ensure_ascii=False,separators=(',',':'))+';\n')
 # ---------- page ----------
@@ -99,7 +107,6 @@ html=f'''<!doctype html>
   <div class="mapcard">
     <div class="mapbar">
       <label><input type="checkbox" id="ck-osm"> map background</label>
-      <label><input type="checkbox" id="ck-rail"> OpenRailwayMap overlay</label>
       <label><input type="checkbox" id="ck-cantons" checked> cantons by day</label>
       <label><input type="checkbox" id="ck-live"> live trains on our lines</label>
       <span class="days" id="livedays"><button data-d="1">Fri</button><button data-d="2">Sat</button><button data-d="3">Sun</button></span>
@@ -126,7 +133,7 @@ html=f'''<!doctype html>
   <div class="notes">
     <div class="note warn"><b>Everything runs hourly — the schedule is a chain.</b> Miss one train and you usually lose 60 minutes. Set phone timers. 15′ stops leave no margin for a late train — if one slips, fall back to the next hourly service and the rest of the chain shifts by an hour.</div>
     <div class="note warn"><b>Day lengths:</b> Option A — Fri 07:05–{dayA[0]}, Sat 07:18–{dayA[1]}, Sun {A['days'][2]['legs'][0]['dep']}–{dayA[2]}. Option B — Fri 07:05–{dayB[0]}, Sat 07:18–{dayB[1]}, Sun {B['days'][2]['legs'][0]['dep']}–{dayB[2]}. Both sleep Luzern, then Neuchâtel.</div>
-    <div class="note"><b>Live trains:</b> the map can show every train currently running on the lines of the selected day — positions are computed from the SBB timetable plus the reported delays (transport.opendata.ch station boards, refreshed every 5 minutes), not from GPS, so expect them to be a minute or two off. Trains with the number of one we take are ringed in yellow. Untick it when you don't need it.</div>
+    <div class="note"><b>The map</b> shows only the lines we ride: the full extent of each line in grey, our sections in the day colour. <b>Live trains:</b> the map can show every train currently running on those lines for the selected day — positions are computed from the SBB timetable plus the reported delays (transport.opendata.ch station boards, refreshed every 5 minutes), not from GPS, so expect them to be a minute or two off. Trains with the number of one we take are ringed in yellow. Untick it when you don't need it.</div>
     <div class="note"><b>The RE 48 briefly crosses Germany</b> (Jestetten corridor before Schaffhausen). Swiss tickets valid, normally no checks — carry an ID.</div>
     <div class="note"><b>The CJ leg is a train, not a bus:</b> the narrow-gauge red Chemins de fer du Jura from Glovelier through the Franches-Montagnes to La Chaux-de-Fonds. Option A rides it 16:41→17:56 at dusk and drinks the JU beer on it — 75′ through the Jura, the best ride of the trip. Option B skips it: IC from Delémont to Biel (BE beer) and on to Neuchâtel for the night.</div>
     <div class="note"><b>Drinking your own beer on board is allowed</b> on all trains in this plan (SBB, Thurbo, SOB, Appenzeller Bahnen, Zentralbahn, CJ) and on platforms — that is what Option A is built on. Stock up at Zürich HB and top up in Schaffhausen, Landquart, Olten and Basel. Every on-board beer has at least 20′ inside its canton; the shortest is <b>AR</b> (≈22′, Lustmühle → Gais), the longest <b>JU</b> on the CJ (≈96′) and <b>TG</b> on the S 1 (≈88′). AG is taken on the S 26 through the Freiamt (≈44′) — the price is one hour on Saturday (Olten 13:21, next IC with a proper stop 14:04). BE is the last one, through Bern on the way home.</div>
@@ -135,7 +142,7 @@ html=f'''<!doctype html>
   </div>
 </section>
 <footer class="attr">
-  Timetable: official Swiss public-transport data (transport.opendata.ch / SBB), queried 05.09.2026 for 16–18.10.2026 — annual timetable 2026; re-verify shortly before travel via the SBB links. Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; railway overlay © <a href="https://www.openrailwaymap.org/">OpenRailwayMap</a> (CC-BY-SA); track geometry: SBB open data (data.sbb.ch, "Linie mit Polygon"); canton outlines: swisstopo. 26 cantons, 26 beers — drink responsibly. Prost, Santé, Salute, Viva!
+  Timetable: official Swiss public-transport data (transport.opendata.ch / SBB), queried 05.09.2026 for 16–18.10.2026 — annual timetable 2026; re-verify shortly before travel via the SBB links. Map: lakes and optional background © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors; track geometry: SBB open data (data.sbb.ch, "Linie mit Polygon"); canton outlines: swisstopo. 26 cantons, 26 beers — drink responsibly. Prost, Santé, Salute, Viva!
 </footer>
 </div>
 <script src="leaflet.js"></script>
@@ -164,14 +171,11 @@ function stopsList(variant){{
 const map = L.map('map', {{zoomSnap:0.5, worldCopyJump:false}}).setView([46.85, 8.25], 8);
 const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom:19, attribution:'© OpenStreetMap'}});
 $('ck-osm').addEventListener('change', e => e.target.checked ? osmLayer.addTo(map).bringToBack() : map.removeLayer(osmLayer));
-const railLayer = L.tileLayer('https://{{s}}.tiles.openrailwaymap.org/standard/{{z}}/{{x}}/{{y}}.png', {{maxZoom:19, subdomains:'abc', opacity:.75, attribution:'© OpenRailwayMap'}});
 const cantonLayer = L.layerGroup().addTo(map), netLayer = L.layerGroup().addTo(map), routeLayer = L.layerGroup().addTo(map), stopLayer = L.layerGroup().addTo(map), liveLayer = L.layerGroup().addTo(map);
-$('ck-rail').addEventListener('change', e => e.target.checked ? railLayer.addTo(map) : map.removeLayer(railLayer));
-if($('ck-rail').checked) railLayer.addTo(map);
-// whole Swiss rail network (SBB open data), thin grey
-(window.KT_NET||[]).forEach(line => L.polyline(line, {{color:'#8a8a86', weight:1.1, opacity:.75, interactive:false}}).addTo(netLayer));
 const lakeLayer = L.layerGroup().addTo(map);
-(DATA.lakes||[]).forEach(p => L.polygon(p, {{color:'#5b8fd0', weight:.6, opacity:.5, fillColor:'#5b8fd0', fillOpacity:.22, interactive:false}}).addTo(lakeLayer));
+(DATA.lakes||[]).forEach(p => L.polygon(p, {{color:'#3f7fc6', weight:.8, opacity:.7, fillColor:'#5ea0e6', fillOpacity:.45, interactive:false}}).addTo(lakeLayer));
+// the full extent of every line we ride, thin grey — our sections are drawn on top in colour
+(window.KT_NET||[]).forEach(line => L.polyline(line, {{color:'#8a8a86', weight:1.6, opacity:.8, interactive:false}}).addTo(netLayer));
 $('ck-cantons').addEventListener('change', e => e.target.checked ? cantonLayer.addTo(map) : map.removeLayer(cantonLayer));
 function pathLen(p){{ let s=0; for(let i=1;i<p.length;i++) s+=map.distance(p[i-1],p[i]); return s; }}
 function pointAt(p, f){{
@@ -218,7 +222,7 @@ function renderMap(variant){{
   for(const d of [1,2,3]) lg += '<span class="lg"><span class="sw" style="background:'+DAYC[d]+'"></span>'+DAYLBL[d]+'</span>';
   lg += '<span class="lg"><span class="pin"></span>beer stop</span><span class="lg"><span class="wk"></span>walk link</span>';
   if(OB.length) lg += '<span class="lg" style="color:var(--beer-line)">'+MUG+'beer on board</span>';
-  lg += '<span class="lg"><span class="sw" style="background:#8a8a86;height:2px"></span>other rail lines</span>';
+  lg += '<span class="lg"><span class="sw" style="background:#8a8a86;height:2px"></span>full extent of our lines</span>';
   lg += '<span class="lg"><span class="trmk IC" style="position:static;transform:none">IC</span><span class="trmk S" style="position:static;transform:none">S</span> live train</span>';
   $('maplegend').innerHTML = lg;
   $('stopindex').innerHTML = stops.map(st => '<span class="si"><span class="n" style="color:'+DAYC[st.day]+'">'+st.n+'</span><span>'+esc(st.station)+' · <b>'+st.canton+'</b></span></span>').join('');
