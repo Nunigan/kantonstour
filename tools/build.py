@@ -1,15 +1,15 @@
 import json,re
-S='/tmp/claude-1000/-home-nunigan-Documents-kantonstour/459284f2-91ac-4974-8dc6-ab56334d110b/scratchpad'
+import os
+S=os.path.dirname(os.path.abspath(__file__))
 OUT='/home/nunigan/Documents/kantonstour'
 v4=json.load(open(S+'/data_v4.json'))
 A=json.load(open(S+'/plan_a.json')); B=json.load(open(S+'/plan_b.json'))
-B['onboard']=[]
 DATA={'a':A,'b':B,'beer_day':v4['beer_day'],'canton_names':v4['canton_names'],'map':v4['map']}
 def ends(P): return ' / '.join(d['legs'][-1]['arr'] for d in P['days'])
 def home(P): return P['days'][2]['legs'][-1]['arr']
 nA=1+sum(1 for d in A['days'] for l in d['legs'] if l['canton']); nOB=len(A['onboard'])
 nB=1+sum(1 for d in B['days'] for l in d['legs'] if l['canton'])
-assert nA+nOB==26 and nB==26, (nA,nOB,nB)
+assert nA+nOB==26 and nB+len(B['onboard'])==26, (nA,nOB,nB)
 pre=open(S+'/template_pre.html').read(); rest=open(S+'/template_rest.html').read()
 def rep(s,old,new,count=1):
     assert old in s, old[:60]; return s.replace(old,new,count)
@@ -76,15 +76,17 @@ md=f'''# Kantonstour 16.–18.10.2026 – alle 26 Kantone mit dem Zug
 Ein Bier in jedem Kanton, nur Zug (kein Bus), Start und Ziel **Zürich HB**, Übernachtung **Luzern** und **Neuenburg**.
 Zeiten aus dem SBB-Fahrplan (abgefragt 05.09.2026). **SBB** öffnet die Verbindung live – vor der Reise nochmals prüfen.
 
-Bier Nr. 1: **Zürich HB ~06:45**, vor der Abfahrt 07:05. Beide Optionen mit knappen Halten (mind. 15′ pro Bierhalt, länger nur wo der Stundentakt es erzwingt). A: 12 + 9 + 5 Biere pro Tag, B: 12 + 10 + 4.
+Bier Nr. 1: **Zürich HB ~06:45**, vor der Abfahrt 07:05. Beide Optionen mit knappen Halten (mind. 15′ pro Bierhalt, länger nur wo der Stundentakt es erzwingt). A: 12 + 9 + 5 Biere pro Tag, B: 12 + 10 + 4 (BE schon am Samstag).
 
-## Option A – Bier im Zug ({nA} Halte + {nOB} Biere im Zug, So zuhause {home(A)})
+Beide Optionen: aussteigen nur, wo ohnehin umgestiegen wird ({nA} Halte); {nOB} Kantone werden im Zug getrunken (🚆🍺-Zeilen). Unterschied nur Samstag Basel → Neuenburg.
 
-Aussteigen nur, wo ohnehin umgestiegen wird; {nOB} Kantone werden im Zug getrunken (🚆🍺-Zeilen, mit dem Abschnitt zum Öffnen). Fr 07:05–{A['days'][0]['legs'][-1]['arr']} · Sa 07:18–{A['days'][1]['legs'][-1]['arr']} · So {A['days'][2]['legs'][0]['dep']}–{home(A)}.
+## Option A – Jurabahn ({nA} Halte + {nOB} Biere im Zug, So zuhause {home(A)})
+
+Samstag via Delémont, CJ durch die Freiberge und La Chaux-de-Fonds. Fr 07:05–{A['days'][0]['legs'][-1]['arr']} · Sa 07:18–{A['days'][1]['legs'][-1]['arr']} · So {A['days'][2]['legs'][0]['dep']}–{home(A)}.
 {table(A,None)}
-## Option B – alles am Boden (26 Halte, So zuhause {home(B)})
+## Option B – gemütlich ({nB} Halte + {len(B['onboard'])} Biere im Zug, So zuhause {home(B)})
 
-In jedem Kanton aussteigen, mind. 15′. Fr 07:05–{B['days'][0]['legs'][-1]['arr']} · Sa 07:18–{B['days'][1]['legs'][-1]['arr']} · So {B['days'][2]['legs'][0]['dep']}–{home(B)}.
+Samstag im IC 51 sitzen bleiben, Basel 15:32 → Neuenburg 17:07 ohne Umsteigen: JU und BE im Zug, NE-Bier bei der Ankunft; Sonntag ohne BE-Bier. Fr 07:05–{B['days'][0]['legs'][-1]['arr']} · Sa 07:18–{B['days'][1]['legs'][-1]['arr']} · So {B['days'][2]['legs'][0]['dep']}–{home(B)}.
 {table(B,None)}
 ## Hinweise
 
@@ -92,9 +94,9 @@ In jedem Kanton aussteigen, mind. 15′. Fr 07:05–{B['days'][0]['legs'][-1]['a
 - **Graubünden / Glarus:** Wende in Landquart (GR-Bier dort, kein Abstecher nach Chur), dann dem Walensee entlang nach Ziegelbrücke – Bahnhof im Glarnerland; 5′ über die Linth nach Niederurnen für ein ehrliches GL-Bier.
 - **Voralpen-Express** Pfäffikon SZ → Luzern: SZ-Bier in Option A, ~60′ im Kanton Schwyz.
 - **Gotthard:** IR 26 / IR 46 über die Bergstrecke nach Airolo; UR-Bier in Option A zwischen Brunnen und Göschenen.
-- **Nicht über Zürich:** Samstag Airolo → Arth-Goldau → Zug (ZG-Halt), dann A: S 1 nach Rotkreuz und S 26 durchs Freiamt (Muri, Wohlen, Lenzburg, Aarau) nach Olten mit AG-Bier im Zug (≈44′); B: Zug → Luzern → Sursee → Zofingen (AG-Halt) → Olten.
-- **CJ:** nur Option A – Delémont → Glovelier (R 2), dann die Schmalspurbahn nach La Chaux-de-Fonds (75′) mit JU-Bier im Zug, RE 6 runter nach Neuenburg. Option B: IC Delémont → Biel (BE-Bier) → Neuenburg (NE-Bier, Übernachtung).
-- **Sonntag (A):** Neuenburg → Genf via Yverdon (VD im Zug), IR 90 nach Martigny und zurück nach Lausanne, IC 1 via Freiburg und Bern (FR und BE im Zug) nach Zürich.
+- **Nicht über Zürich:** Samstag Airolo → Arth-Goldau → Zug (ZG-Halt), dann A: S 1 nach Rotkreuz und S 26 durchs Freiamt (Muri, Wohlen, Lenzburg, Aarau) nach Olten mit AG-Bier im Zug (≈44′).
+- **Samstag Basel → Neuenburg:** A – Delémont → Glovelier (R 2), dann die Schmalspurbahn nach La Chaux-de-Fonds (75′) mit JU-Bier im Zug, NE-Bier dort, RE 6 runter nach Neuenburg. B – IC 51 durchgehend: JU-Bier ≈23′ (Moutier ist seit 2026 jurassisch), BE-Bier ≈25′ (Lengnau → Biel → La Neuveville), NE-Bier in Neuenburg.
+- **Sonntag:** Neuenburg → Genf via Yverdon (VD im Zug), IR 90 nach Martigny, IC 1 via Freiburg und Bern nach Zürich – FR im Zug, in A auch BE.
 - **Risiken:** alles stündlich – ein verpasster Zug kostet ~60′. RE 48 fährt kurz durch Deutschland (Ausweis). OLMA in St. Gallen 8.–18.10.: volle Züge am Freitag. Fahrplan kurz vorher auf sbb.ch prüfen.
 - **Tickets:** 3× Spartageskarte oder GA – gilt auch für Appenzeller Bahnen, Zentralbahn, CJ. Eigenes Bier ist in allen Zügen und auf den Perrons erlaubt.
 

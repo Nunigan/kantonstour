@@ -120,40 +120,14 @@ def run(plan):
         days.append({'day':day,'date':date,'legs':out}); routes[str(day)]=''.join(paths)
         print(f"  day {day}: {out[0]['dep']}–{out[-1]['arr']}, stops:",[(l['to'],l['canton'],l['stop_min']) for l in out])
     return {'days':days,'routes':routes,'onboard':onboard}
+# B = A with a lazy Saturday: stay on the IC 51 Basel → Neuchâtel (JU + BE on board, NE arrival beer), no BE beer on Sunday
 PLAN_B=[
- (F,[
-  L('Zürich HB','Schaffhausen','SH',note='Bier Nr. 1 ZH am HB-Kiosk vor der Abfahrt',start='07:05'),
-  L('Schaffhausen','Frauenfeld','TG'),
-  L('Frauenfeld','St. Gallen','SG'),
-  L('St. Gallen','Teufen AR','AR'),
-  L('Teufen AR','Appenzell','AI'),
-  L('Appenzell','Altstätten Stadt',None,note="Zahnradbahn runter, dann 1.7 km (~25′) zu Fuss nach Altstätten SG",walk_after=40),
-  L('Altstätten SG','Landquart','GR',note='Wende hier – kein Abstecher nach Chur'),
-  L('Landquart','Ziegelbrücke','GL',note='5′ über die Linth nach Glarus Nord'),
-  L('Ziegelbrücke','Pfäffikon SZ','SZ'),
-  L('Pfäffikon SZ','Luzern',None,direct=True,note='Voralpen-Express direkt – Umsteigen für die NW/OW-Schlaufe'),
-  L('Luzern','Hergiswil NW','NW'),
-  L('Hergiswil NW','Sarnen','OW'),
-  L('Sarnen','Luzern','LU',note='Ankunftsbier – Übernachtung Luzern'),
+ PLAN_A[0],
+ (SA, PLAN_A[1][1][:4]+[
+  L('Basel SBB','Neuchâtel','NE',onboard=['JU','BE'],direct=True,note='IC 51 durchgehend, kein Umsteigen – Ankunftsbier, Übernachtung Neuenburg'),
  ]),
- (SA,[
-  L('Luzern','Flüelen','UR',start='07:00'),
-  L('Flüelen','Airolo','TI',note='Treno Gottardo über die Bergstrecke'),
-  L('Airolo','Zug','ZG'),
-  L('Zug','Zofingen','AG',note='via Luzern und Sursee – nicht über Zürich'),
-  L('Zofingen','Olten','SO'),
-  L('Olten','Liestal','BL'),
-  L('Liestal','Basel SBB','BS'),
-  L('Basel SBB','Delémont','JU'),
-  L('Delémont','Biel/Bienne','BE'),
-  L('Biel/Bienne','Neuchâtel','NE',note='Ankunftsbier – Übernachtung Neuenburg'),
- ]),
- (SU,[
-  L('Neuchâtel','Genève','GE',start='08:00',note='via Yverdon'),
-  L('Genève','Lausanne','VD'),
-  L('Lausanne','Martigny','VS'),
-  L('Martigny','Fribourg/Freiburg','FR'),
-  L('Fribourg/Freiburg','Zürich HB',None,note='nach Hause'),
+ (SU, PLAN_A[2][1][:2]+[
+  L('Martigny','Zürich HB',None,onboard=['FR'],via='Fribourg/Freiburg',note='nach Hause'),
  ]),
 ]
 if __name__=='__main__':

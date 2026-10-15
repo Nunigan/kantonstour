@@ -31,7 +31,7 @@ def ends(P): return ' / '.join(d['legs'][-1]['arr'] for d in P['days'])
 def home(P): return P['days'][2]['legs'][-1]['arr']
 nA=1+sum(1 for d in A['days'] for l in d['legs'] if l['canton']); nOB=len(A['onboard'])
 nB=1+sum(1 for d in B['days'] for l in d['legs'] if l['canton'])
-assert nA+nOB==26 and nB==26,(nA,nOB,nB)
+assert nA+nOB==26 and nB+len(B['onboard'])==26,(nA,nOB,nB)
 def pip(pt,poly):
     x,y=pt[1],pt[0]; inside=False; n=len(poly)
     for i in range(n):
@@ -129,14 +129,14 @@ html=f'''<!doctype html>
   <div class="eyebrow">16.–18. Oktober 2026 · Fr–So · alle 26 Kantone · nur Zug, kein Bus</div>
   <h1>Kantonstour</h1>
   <p class="sub">Ein Bier in <b>jedem</b> Kanton in drei Tagen, nur mit dem Zug. Start und Ziel Zürich HB, Übernachtung in <b>Luzern</b> und <b>Neuenburg</b>.
-  <b>Option A</b> trinkt {nOB} der 26 Biere <b>im Zug</b> und steigt nur aus, wo ohnehin umgestiegen wird ({nA} Halte). <b>Option B</b> steigt in <b>allen 26</b> Kantonen aus, mindestens 15′ pro Halt.
+  <b>Beide Optionen</b> trinken {nOB} der 26 Biere <b>im Zug</b> und steigen nur aus, wo ohnehin umgestiegen wird ({nA} Halte). Unterschied nur am Samstag: <b>Option A</b> nimmt die Jurabahn über La Chaux-de-Fonds, <b>Option B</b> bleibt gemütlich im IC 51 bis Neuenburg sitzen – zwei Stunden früher am Ziel.
   Zürich nur am Anfang und am Ende, Wende in Landquart statt Chur. Alle Verbindungen aus dem SBB-Fahrplan für diese Daten – <b>SBB</b> öffnet die Verbindung live.</p>
-  <div class="verdict"><span class="dot"></span>Machbar – 26/26 Kantone · A: {nA} Halte + {nOB} im Zug, zuhause {home(A)} · B: 26 Halte, zuhause {home(B)}</div>
+  <div class="verdict"><span class="dot"></span>Machbar – 26/26 Kantone · {nA} Halte + {nOB} im Zug · Samstag A bis {A['days'][1]['legs'][-1]['arr']}, B bis {B['days'][1]['legs'][-1]['arr']} · zuhause So {home(A)}</div>
 </header>
 <div class="stats" id="stats"></div>
 <div class="togglebar"><div class="toggle" role="tablist" aria-label="Variant">
-  <button id="btn-a" role="tab">Option A · Bier im Zug<span class="hint">{nA} Halte + {nOB} Biere im Zug · Tagesende {ends(A)}</span></button>
-  <button id="btn-b" role="tab">Option B · Alles am Boden<span class="hint">26 Halte, mind. 15′ · Tagesende {ends(B)}</span></button>
+  <button id="btn-a" role="tab">Option A · Jurabahn<span class="hint">Sa via La Chaux-de-Fonds · Tagesende {ends(A)}</span></button>
+  <button id="btn-b" role="tab">Option B · Gemütlich<span class="hint">Sa im IC 51 bis Neuenburg · Tagesende {ends(B)}</span></button>
 </div></div>
 <section>
   <div class="sechead"><h2>Die Route</h2><div class="rule"></div><div class="tag" id="maptag"></div></div>
@@ -172,7 +172,7 @@ html=f'''<!doctype html>
     <div class="note warn"><b>Tage:</b> A – Fr 07:05–{dayA[0]}, Sa 07:18–{dayA[1]}, So {A['days'][2]['legs'][0]['dep']}–{dayA[2]}. B – Fr 07:05–{dayB[0]}, Sa 07:18–{dayB[1]}, So {B['days'][2]['legs'][0]['dep']}–{dayB[2]}.</div>
     <div class="note"><b>Karte:</b> nur unsere Linien – ganze Länge grau, unsere Abschnitte farbig. <b>Züge live</b> zeigt alle Züge auf diesen Linien; Position aus Fahrplan und gemeldeter Verspätung (transport.opendata.ch, alle 5 Min), kein GPS – 1–2 Minuten Abweichung. ★ = Zugnummern, die wir nehmen.</div>
     <div class="note"><b>RE 48</b> fährt kurz durch Deutschland – Ausweis mitnehmen.</div>
-    <div class="note"><b>CJ (Option A):</b> Schmalspurbahn Glovelier → La Chaux-de-Fonds, 16:41→17:56, JU-Bier an Bord. Option B: IC Delémont → Biel → Neuenburg.</div>
+    <div class="note"><b>Samstag Basel → Neuenburg.</b> A: IC 51 bis Delémont, R 2 nach Glovelier, dann die CJ-Schmalspurbahn durch die Freiberge (JU-Bier ≈96′), NE-Bier in La Chaux-de-Fonds, RE 6 runter nach Neuenburg. B: im IC 51 sitzen bleiben, 15:32 → 17:07 ohne Umsteigen – JU-Bier (≈23′, Moutier ist seit 2026 jurassisch), BE-Bier (≈25′, Biel und Bielersee), NE-Bier bei der Ankunft. Dafür am Sonntag kein BE-Bier.</div>
     <div class="note"><b>Eigenes Bier im Zug</b> ist auf allen Bahnen erlaubt. Nachschub in Zürich, Schaffhausen, Landquart, Olten, Basel. Kürzestes Bier im Zug: AR (≈22′); längste: JU (≈96′), TG (≈88′). AG auf der S 26 durchs Freiamt (≈44′) kostet am Samstag eine Stunde.</div>
     <div class="note good"><b>Tickets:</b> 3× Spartageskarte oder GA – gilt auch für Appenzeller Bahnen, Zentralbahn und CJ.</div>
     <div class="note"><b>OLMA</b> in St. Gallen 8.–18.10.: volle Züge am Freitag. Fahrplan kurz vor der Reise nochmals prüfen.</div>
@@ -240,9 +240,10 @@ function renderMap(variant){{
       pl.bindTooltip('<b>'+esc(tr)+'</b> '+esc(l.from)+' → '+esc(l.to)+'<br>'+l.dep+' → '+l.arr+' · Tag '+d.day, {{sticky:true}});
       bounds = bounds ? bounds.extend(pl.getBounds()) : pl.getBounds();
     }});
-    OB.filter(o => o.day===d.day && o.leg===li).forEach(o => {{
+    const obs = OB.filter(o => o.day===d.day && o.leg===li);
+    obs.forEach((o, k) => {{
       const full = l.geo.flat(); if(full.length<2) return;
-      const pt = pointAt(full, 0.5);
+      const pt = pointAt(full, (k+1)/(obs.length+1));
       L.marker(pt, {{icon: L.divIcon({{className:'', html:'<div class="obmk">'+MUGSVG(22)+o.c+'</div>', iconSize:[0,0], iconAnchor:[0,0]}}), zIndexOffset:500}})
         .bindTooltip('<b>'+o.c+' – Bier im Zug</b><br>≈'+o.mins+'′ im Kanton · '+esc(o.note)).addTo(stopLayer);
     }});
