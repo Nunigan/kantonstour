@@ -39,9 +39,14 @@ def tname(s):
     n=str(s['number'] or '')
     if n and n.isalpha(): return n
     return (s['cat']+' '+n.lstrip('0')).strip()
-def sbb(c):
-    stops=[{"value":c['from_id'],"type":"ID","label":c['from']},{"value":c['to_id'],"type":"ID","label":c['to']}]
-    return 'https://www.sbb.ch/en?'+urllib.parse.urlencode({'stops':json.dumps(stops),'date':json.dumps(c['dep'].strftime('%Y-%m-%d')),'time':json.dumps(hm(c['dep'])),'moment':json.dumps('DEPARTURE')})
+def sbb(c,via=None):
+    # sbb.ch format since 2026: stops=Label_I<id>~…&time=HH_MM&moment=dep&day=YYYY-MM-DD (old JSON stops format opens an empty form)
+    stops=[(c['from'],c['from_id']),(c['to'],c['to_id'])]
+    if via:
+        v=next((p for s in c['trains'] for p in s['pass_full'] if p['name']==via),None)
+        if v: stops.insert(1,(via,v['id']))
+    st='~'.join(urllib.parse.quote_plus(n)+'_I'+i for n,i in stops)
+    return f"https://www.sbb.ch/de?stops={st}&time={hm(c['dep']).replace(':','_')}&moment=dep&day={c['dep'].strftime('%Y-%m-%d')}"
 def xy(name):
     if name in STXY: return STXY[name]
     lat,lon,_,_=coords(name); return to_svg(lat,lon)
@@ -101,7 +106,7 @@ def run(plan):
             trains=[{'train':tname(s),'dir':s['dir'],'dep_station':s['dep_station'],'dep_time':s['dep_time'],'dep_platform':s['dep_platform'],
                      'arr_station':s['arr_station'],'arr_time':s['arr_time'],'arr_platform':s['arr_platform']} for s in c['trains']]
             rec={'from':leg['frm'],'to':leg['to'],'canton':leg['canton'],'note':leg['note'],'dep':hm(c['dep']),'arr':hm(c['arr']),
-                 'duration_min':c['duration_min'],'transfers':c['transfers'],'trains':trains,'sbb':sbb(c),'from_xy':xy(leg['frm']),'to_xy':xy(leg['to']),'stop_min':None,'walk':bool(leg['walk_after'])}
+                 'duration_min':c['duration_min'],'transfers':c['transfers'],'trains':trains,'sbb':sbb(c,leg['via']),'from_xy':xy(leg['frm']),'to_xy':xy(leg['to']),'stop_min':None,'walk':bool(leg['walk_after'])}
             for ab in leg['onboard']:
                 onboard.append({'c':ab,'day':day,'leg':li,'mins':cm[ab],'note':ONB_NOTES.get(ab,f"{wh[ab][0]} → {wh[ab][1]}")})
             if out: out[-1]['stop_min']=int((c['dep']-prev_arr).total_seconds()//60)

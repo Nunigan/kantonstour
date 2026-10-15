@@ -70,7 +70,43 @@ html=f'''<!doctype html>
 <style>{leaflet_css}</style>
 <style>{css}
 #map{{height:640px;border-radius:10px;overflow:hidden;background:var(--surface2)}}
+.touchhint{{display:none;font-size:11.5px;color:var(--muted);padding:6px 4px 0}}
+@media (pointer:coarse){{.touchhint{{display:block}}}}
 @media (max-width:700px){{#map{{height:480px}}}}
+@media (max-width:600px){{
+  .wrap{{padding:0 12px 60px}}
+  header{{padding:24px 0 6px}}
+  .sub{{font-size:15px}}
+  .verdict{{border-radius:12px;padding:8px 12px;font-size:13px;align-items:flex-start}}
+  .verdict .dot{{margin-top:5px;flex:none}}
+  .stats{{grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}}
+  .tile{{padding:10px 12px}}
+  .tile .v{{font-size:21px}}
+  .tile .k{{font-size:10.5px}}
+  .togglebar{{padding:8px 0;margin-top:14px}}
+  .toggle button{{padding:8px 6px;font-size:13px}}
+  .toggle button .hint{{display:none}}
+  section{{margin-top:30px}}
+  .sechead{{flex-wrap:wrap;gap:2px 10px}}
+  .sechead .rule{{display:none}}
+  .sechead .tag{{flex-basis:100%;white-space:normal;font-size:11px}}
+  .mapcard{{padding:8px;border-radius:12px}}
+  #map{{height:min(360px,60vh)}}
+  .mapbar{{gap:6px 12px;padding-bottom:8px}}
+  .mapbar .status{{margin-left:0;flex-basis:100%}}
+  .mapbar .days button{{padding:6px 12px;font-size:13px}}
+  .maplegend{{gap:8px 12px;font-size:12px}}
+  .stopindex{{grid-template-columns:1fr 1fr;gap:3px 10px;font-size:12px}}
+  .day{{margin-top:16px;border-radius:12px}}
+  .dayhead{{padding:12px 12px;gap:2px 10px}}
+  .dayhead .dmeta{{margin-left:0;flex-basis:100%;font-size:11.5px}}
+  table{{min-width:0}}
+  td{{padding:8px 8px;font-size:13.5px}}
+  td.t{{width:66px;white-space:normal;font-size:12.5px;line-height:1.35}}
+  .trainchip{{margin:0 6px 2px 0}}
+  .sbblink{{display:inline-block;font-size:13px;padding:4px 10px;margin:6px 0 0;border-radius:6px}}
+  .note{{padding:10px 12px}}
+}}
 .mapbar{{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:0 4px 10px;font-size:13px;color:var(--ink2)}}
 .mapbar label{{display:inline-flex;align-items:center;gap:6px;font-weight:600;cursor:pointer}}
 .mapbar .days{{display:inline-flex;gap:4px}}
@@ -113,6 +149,7 @@ html=f'''<!doctype html>
       <span class="status" id="livestatus"></span>
     </div>
     <div id="map"></div>
+    <div class="touchhint">Karte mit zwei Fingern verschieben und zoomen</div>
     <div class="maplegend" id="maplegend"></div>
     <div class="stopindex" id="stopindex"></div>
   </div>
@@ -169,7 +206,8 @@ function stopsList(variant){{
   return {{stops, walks}};
 }}
 // ---------- map ----------
-const map = L.map('map', {{zoomSnap:0.5, worldCopyJump:false}}).setView([46.85, 8.25], 8);
+const TOUCH = matchMedia('(pointer:coarse)').matches;
+const map = L.map('map', {{zoomSnap:0.25, worldCopyJump:false, dragging:!TOUCH}}).setView([46.85, 8.25], 8);
 const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{maxZoom:19, attribution:'© OpenStreetMap'}});
 $('ck-osm').addEventListener('change', e => e.target.checked ? osmLayer.addTo(map).bringToBack() : map.removeLayer(osmLayer));
 const cantonLayer = L.layerGroup().addTo(map), netLayer = L.layerGroup().addTo(map), routeLayer = L.layerGroup().addTo(map), stopLayer = L.layerGroup().addTo(map), liveLayer = L.layerGroup().addTo(map);
